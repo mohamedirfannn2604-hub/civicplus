@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CivicPulse — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:      #0d0f1a;
+  --bg2:     #131626;
+  --bg3:     #1a1d2e;
+  --bg4:     #1f2235;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text:    #e8eaf6;
+  --text2:   #7c82a8;
+  --text3:   #4a5070;
+  --accent:  #7c6df0;
+  --accent2: #5b4fd4;
+  --green:   #22d37a;
+  --red:     #ff5c7c;
+  --amber:   #ffb547;
+  --cyan:    #22d4ee;
+  --pink:    #f06292;
+  --sidebar-w: 240px;
+  --header-h:  64px;
+  --radius:    14px;
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body { font-family: var(--font-body); background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow-x: hidden; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--accent2); border-radius: 99px; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar-logo {
+  padding: 1.4rem 1.4rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.logo-mark {
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.logo-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; color: #fff; flex-shrink: 0;
+}
+.logo-text { font-family: var(--font-head); font-size: 1.1rem; font-weight: 800; }
+.logo-text span { color: var(--accent); }
+.logo-badge {
+  margin-top: 0.5rem; font-size: 0.68rem; color: var(--text3);
+  background: rgba(124,109,240,0.1); border: 1px solid rgba(124,109,240,0.2);
+  border-radius: 99px; padding: 0.2rem 0.6rem; display: inline-block;
+}
+
+.sidebar-nav { flex: 1; padding: 1rem 0.7rem; overflow-y: auto; }
+.nav-group { margin-bottom: 1.5rem; }
+.nav-group-label {
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text3);
+  padding: 0 0.7rem; margin-bottom: 0.4rem;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.62rem 0.8rem; border-radius: 10px;
+  font-size: 0.875rem; font-weight: 500; color: var(--text2);
+  cursor: pointer; transition: all 0.18s; margin-bottom: 0.15rem;
+  position: relative; text-decoration: none;
+}
+.nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.nav-item.active {
+  background: rgba(124,109,240,0.14);
+  color: #fff;
+  font-weight: 600;
+}
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 20%; bottom: 20%;
+  width: 3px; background: var(--accent); border-radius: 0 3px 3px 0;
+}
+.nav-item i { width: 18px; text-align: center; font-size: 0.9rem; }
+.nav-badge {
+  margin-left: auto; background: var(--red);
+  color: #fff; font-size: 0.62rem; font-weight: 700;
+  padding: 0.12rem 0.45rem; border-radius: 99px;
+}
+.nav-badge.green { background: var(--green); color: #0d1a10; }
+
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+}
+.admin-profile {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.65rem 0.8rem; border-radius: 10px;
+  cursor: pointer; transition: background 0.18s;
+}
+.admin-profile:hover { background: rgba(255,255,255,0.05); }
+.admin-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--pink));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.admin-info { flex: 1; min-width: 0; }
+.admin-name { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.admin-role { font-size: 0.7rem; color: var(--text3); }
+
+/* ── MAIN ── */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: var(--header-h);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 1.8rem;
+  gap: 1rem;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-title { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; }
+.topbar-sub { font-size: 0.78rem; color: var(--text2); margin-top: 0.1rem; }
+.topbar-right { display: flex; gap: 0.7rem; align-items: center; margin-left: auto; }
+.topbar-btn {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: var(--bg3); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text2); cursor: pointer; font-size: 0.9rem;
+  transition: all 0.18s; position: relative;
+}
+.topbar-btn:hover { background: var(--bg4); color: var(--text); }
+.topbar-notif-dot {
+  position: absolute; top: 5px; right: 5px;
+  width: 7px; height: 7px; background: var(--red); border-radius: 50%;
+  border: 1.5px solid var(--bg2);
+}
+.topbar-search {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 9px; padding: 0.45rem 0.85rem;
+}
+.topbar-search input {
+  background: none; border: none; outline: none;
+  color: var(--text); font-family: var(--font-body); font-size: 0.85rem;
+  width: 180px;
+}
+.topbar-search input::placeholder { color: var(--text3); }
+.topbar-search i { color: var(--text3); font-size: 0.85rem; }
+.date-badge {
+  font-family: var(--font-mono); font-size: 0.73rem;
+  color: var(--text2); background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 0.35rem 0.8rem;
+}
+
+/* ── CONTENT ── */
+.content { padding: 1.6rem 1.8rem; flex: 1; }
+
+/* ── PAGE SECTIONS ── */
+.dash-page { display: none; }
+.dash-page.active { display: block; }
+
+/* ── STAT CARDS ── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.2rem 1.3rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+  cursor: default;
+}
+.stat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+.stat-card::before {
+  content: '';
+  position: absolute; top: 0; right: 0;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.25;
+  pointer-events: none;
+}
+.stat-card.c1::before { background: var(--accent); }
+.stat-card.c2::before { background: var(--green); }
+.stat-card.c3::before { background: var(--amber); }
+.stat-card.c4::before { background: var(--red); }
+.stat-card.c5::before { background: var(--cyan); }
+.stat-card.c6::before { background: var(--pink); }
+.stat-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.9rem; }
+.stat-label { font-size: 0.78rem; color: var(--text2); font-weight: 500; }
+.stat-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; flex-shrink: 0;
+}
+.stat-icon.c1 { background: rgba(124,109,240,0.15); color: var(--accent); }
+.stat-icon.c2 { background: rgba(34,211,122,0.15);  color: var(--green); }
+.stat-icon.c3 { background: rgba(255,181,71,0.15);  color: var(--amber); }
+.stat-icon.c4 { background: rgba(255,92,124,0.15);  color: var(--red); }
+.stat-icon.c5 { background: rgba(34,212,238,0.15);  color: var(--cyan); }
+.stat-icon.c6 { background: rgba(240,98,146,0.15);  color: var(--pink); }
+.stat-num {
+  font-family: var(--font-head);
+  font-size: 1.7rem; font-weight: 800;
+  line-height: 1; margin-bottom: 0.45rem;
+}
+.stat-change {
+  font-size: 0.73rem; display: flex; align-items: center; gap: 0.3rem;
+}
+.stat-change.up { color: var(--green); }
+.stat-change.down { color: var(--red); }
+.stat-change .change-label { color: var(--text3); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.card-header {
+  padding: 1.1rem 1.3rem;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.card-title { font-family: var(--font-head); font-size: 0.95rem; font-weight: 700; }
+.card-sub { font-size: 0.73rem; color: var(--text2); margin-top: 0.15rem; }
+.card-body { padding: 1.3rem; }
+
+/* ── GRID LAYOUTS ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.2rem; }
+.grid-3 { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 1rem; margin-bottom: 1.2rem; }
+.grid-3b { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.2rem; }
+
+/* ── CHART CONTAINERS ── */
+.chart-wrap { position: relative; height: 220px; }
+.chart-wrap-sm { position: relative; height: 170px; }
+
+/* ── TABS ── */
+.tab-group { display: flex; gap: 0.3rem; }
+.tab-pill {
+  padding: 0.32rem 0.8rem; border-radius: 7px;
+  font-size: 0.78rem; font-weight: 500; cursor: pointer;
+  color: var(--text2); border: none; background: none;
+  transition: all 0.18s; font-family: var(--font-body);
+}
+.tab-pill.active { background: rgba(124,109,240,0.15); color: var(--accent); }
+.tab-pill:hover:not(.active) { background: rgba(255,255,255,0.05); color: var(--text); }
+
+/* ── SELECT ── */
+.dash-select {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 0.35rem 0.75rem;
+  color: var(--text); font-family: var(--font-body);
+  font-size: 0.78rem; outline: none; cursor: pointer;
+}
+.dash-select option { background: var(--bg2); }
+
+/* ── TABLE ── */
+.dash-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.dash-table th {
+  padding: 0.65rem 1rem; text-align: left;
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text3);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.dash-table td {
+  padding: 0.7rem 1rem; border-bottom: 1px solid var(--border);
+  color: var(--text); vertical-align: middle;
+}
+.dash-table tbody tr:last-child td { border-bottom: none; }
+.dash-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+/* ── BADGES ── */
+.badge {
+  padding: 0.22rem 0.65rem; border-radius: 99px;
+  font-size: 0.71rem; font-weight: 700; display: inline-block;
+}
+.badge-purple  { background: rgba(124,109,240,0.15); color: var(--accent); }
+.badge-green   { background: rgba(34,211,122,0.15);  color: var(--green); }
+.badge-amber   { background: rgba(255,181,71,0.15);  color: var(--amber); }
+.badge-red     { background: rgba(255,92,124,0.15);  color: var(--red); }
+.badge-cyan    { background: rgba(34,212,238,0.15);  color: var(--cyan); }
+.badge-grey    { background: rgba(160,160,160,0.12); color: var(--text2); }
+
+/* ── MINI CHART LINES ── */
+.sparkline { display: flex; align-items: flex-end; gap: 2px; height: 32px; }
+.spark-bar { flex: 1; border-radius: 2px; background: var(--accent); opacity: 0.6; transition: opacity 0.2s; }
+.spark-bar:hover { opacity: 1; }
+
+/* ── PROGRESS BARS ── */
+.progress-wrap { margin-bottom: 0.8rem; }
+.progress-top { display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 0.35rem; }
+.progress-label { color: var(--text2); }
+.progress-val { font-weight: 600; font-family: var(--font-mono); }
+.progress-bar { height: 6px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 99px; transition: width 1s ease; }
+
+/* ── ACTIVITY FEED ── */
+.activity-item {
+  display: flex; gap: 0.8rem; padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border); align-items: flex-start;
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-dot {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; margin-top: 1px;
+}
+.activity-dot.purple { background: rgba(124,109,240,0.15); color: var(--accent); }
+.activity-dot.green  { background: rgba(34,211,122,0.15);  color: var(--green); }
+.activity-dot.amber  { background: rgba(255,181,71,0.15);  color: var(--amber); }
+.activity-dot.red    { background: rgba(255,92,124,0.15);  color: var(--red); }
+.activity-dot.cyan   { background: rgba(34,212,238,0.15);  color: var(--cyan); }
+.activity-text { flex: 1; }
+.activity-title { font-size: 0.82rem; font-weight: 500; margin-bottom: 0.15rem; }
+.activity-meta { font-size: 0.72rem; color: var(--text3); }
+.activity-time { font-size: 0.71rem; color: var(--text3); white-space: nowrap; font-family: var(--font-mono); }
+
+/* ── MAP CIRCLE CHART ── */
+.donut-wrap { position: relative; width: 140px; height: 140px; margin: 0 auto; }
+.donut-label {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  text-align: center;
+}
+.donut-num { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; }
+.donut-sub { font-size: 0.65rem; color: var(--text2); }
+.legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.77rem; margin-bottom: 0.45rem; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── TOP ITEMS LIST ── */
+.top-item { display: flex; align-items: center; gap: 0.8rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+.top-item:last-child { border-bottom: none; }
+.top-rank { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text3); width: 18px; flex-shrink: 0; }
+.top-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+.top-info { flex: 1; min-width: 0; }
+.top-name { font-size: 0.82rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top-sub  { font-size: 0.71rem; color: var(--text3); }
+.top-val  { font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; color: var(--text); white-space: nowrap; }
+
+/* ── STATUS DROPDOWN ── */
+.status-select {
+  background: none; border: none; font-family: var(--font-body);
+  font-size: 0.75rem; font-weight: 700; cursor: pointer;
+  padding: 0.2rem 0.5rem; border-radius: 99px;
+}
+
+/* ── BUTTON ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.48rem 1rem; border-radius: 9px;
+  font-family: var(--font-body); font-size: 0.82rem; font-weight: 500;
+  cursor: pointer; transition: all 0.18s; border: none; text-decoration: none;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+.btn-ghost { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); }
+.btn-ghost:hover { background: var(--bg4); color: var(--text); }
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.76rem; }
+
+/* ── VIEW ALL ── */
+.view-all { font-size: 0.76rem; color: var(--accent); cursor: pointer; font-weight: 500; white-space: nowrap; transition: opacity 0.18s; }
+.view-all:hover { opacity: 0.75; }
+
+/* ── METRIC MINI ── */
+.metric-mini { display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
+.metric-mini:last-child { border-bottom: none; }
+.metric-mini-left { font-size: 0.82rem; color: var(--text2); }
+.metric-mini-right { font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.fade-in { animation: fadeInUp 0.4s ease both; }
+.fade-in-d1 { animation-delay: 0.05s; }
+.fade-in-d2 { animation-delay: 0.10s; }
+.fade-in-d3 { animation-delay: 0.15s; }
+.fade-in-d4 { animation-delay: 0.20s; }
+.fade-in-d5 { animation-delay: 0.25s; }
+
+@keyframes countUp { from { opacity: 0; } to { opacity: 1; } }
+.stat-num { animation: countUp 0.5s ease; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1200px) {
+  .stat-grid { grid-template-columns: repeat(3, 1fr); }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: none; }
+  .main { margin-left: 0; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .grid-2, .grid-3, .grid-3b { grid-template-columns: 1fr; }
+  .topbar-search { display: none; }
+}
+@media (max-width: 560px) {
+  .stat-grid { grid-template-columns: 1fr; }
+  .content { padding: 1rem; }
+}
+
+/* ── TOAST ── */
+.toast-stack { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; }
+.toast {
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 0.85rem 1.1rem;
+  font-size: 0.82rem; max-width: 300px;
+  display: flex; gap: 0.6rem; align-items: flex-start;
+  animation: fadeInUp 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.toast-icon { font-size: 0.95rem; flex-shrink: 0; }
+.toast-title { font-weight: 600; margin-bottom: 0.15rem; }
+.toast-body { color: var(--text2); font-size: 0.77rem; }
+
+/* ── HAMBURGER ── */
+.hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+.hamburger span { display: block; width: 20px; height: 2px; background: var(--text2); border-radius: 2px; }
+@media (max-width: 900px) { .hamburger { display: flex; } }
+
+/* ── LOADING SKELETON ── */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmerLoad 1.5s infinite;
+  border-radius: 6px; height: 14px;
+}
+@keyframes shimmerLoad { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ── API CONNECT BANNER ── */
+.api-banner {
+  background: rgba(124,109,240,0.08);
+  border: 1px solid rgba(124,109,240,0.2);
+  border-radius: 10px; padding: 0.75rem 1.1rem;
+  display: flex; align-items: center; gap: 0.8rem;
+  font-size: 0.82rem; color: var(--text2);
+  margin-bottom: 1.2rem;
+}
+.api-banner i { color: var(--accent); }
+.api-banner code { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); background: rgba(124,109,240,0.1); padding: 0.1rem 0.4rem; border-radius: 4px; }
+
+/* ── SECTION HEADER ── */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.2rem; }
+.section-title { font-family: var(--font-head); font-size: 1rem; font-weight: 700; }
+.section-sub { font-size: 0.75rem; color: var(--text2); margin-top: 0.15rem; }
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon"><i class="fa-solid fa-city"></i></div>
+      <div class="logo-text">Civic<span>Pulse</span></div>
+    </div>
+    <div class="logo-badge" style="cursor:pointer" onclick="goBack()" title="Back to Portal">⚙️ Admin Panel · ↩ Portal</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-label">Overview</div>
+      <div class="nav-item active" onclick="showPage('dashboard',this)">
+        <i class="fa-solid fa-chart-pie"></i> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('analytics',this)">
+        <i class="fa-solid fa-chart-line"></i> Analytics
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Manage</div>
+      <div class="nav-item" onclick="showPage('issues',this)">
+        <i class="fa-solid fa-flag"></i> Issues
+        <span class="nav-badge" id="nb-pending">—</span>
+      </div>
+      <div class="nav-item" onclick="showPage('donors',this)">
+        <i class="fa-solid fa-droplet"></i> Blood Donors
+      </div>
+      <div class="nav-item" onclick="showPage('volunteers',this)">
+        <i class="fa-solid fa-hands-holding-heart"></i> Volunteers
+      </div>
+      <div class="nav-item" onclick="showPage('users',this)">
+        <i class="fa-solid fa-users"></i> Citizens
+      </div>
+      <div class="nav-item" onclick="showPage('hospitals',this)">
+        <i class="fa-solid fa-hospital"></i> Hospitals
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Content</div>
+      <div class="nav-item" onclick="showPage('schemes',this)">
+        <i class="fa-solid fa-building-columns"></i> Schemes
+      </div>
+      <div class="nav-item" onclick="showPage('messages',this)">
+        <i class="fa-solid fa-envelope"></i> Messages
+        <span class="nav-badge green" id="nb-msg">—</span>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">System</div>
+      <div class="nav-item" onclick="showPage('settings',this)">
+        <i class="fa-solid fa-gear"></i> Settings
+      </div>
+      <div class="nav-item" onclick="goBack()">
+        <i class="fa-solid fa-arrow-left"></i> Back to Portal
+      </div>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="admin-profile" onclick="showToastMsg('Profile','Admin profile settings coming soon.','info')">
+      <div class="admin-avatar">AD</div>
+      <div class="admin-info">
+        <div class="admin-name" id="admin-name">Administrator</div>
+        <div class="admin-role">Super Administrator</div>
+      </div>
+      <i class="fa-solid fa-ellipsis-vertical" style="color:var(--text3);font-size:0.8rem"></i>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">
+      <span></span><span></span><span></span>
+    </div>
+    <div>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-sub" id="topbar-sub">Welcome back — CivicPulse Overview</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" placeholder="Search data…" oninput="globalSearch(this.value)" id="globalSearchInput">
+      </div>
+      <div class="topbar-btn" onclick="refreshAll()" title="Refresh">
+        <i class="fa-solid fa-rotate-right"></i>
+      </div>
+      <div class="topbar-btn" onclick="showToastMsg('Notifications','3 new civic issues reported today.','info')" title="Notifications">
+        <i class="fa-solid fa-bell"></i>
+        <div class="topbar-notif-dot"></div>
+      </div>
+      <div class="topbar-btn" onclick="exportCurrentData()" title="Export">
+        <i class="fa-solid fa-download"></i>
+      </div>
+      <div class="date-badge" id="dateBadge"></div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- API Banner -->
+    <div class="api-banner" id="apiBanner">
+      <i class="fa-solid fa-circle-info"></i>
+      <span>No backend connected. All data shown here is live from your server once connected. Set the API URL in <strong>Settings</strong> and click <strong>Connect</strong>.</span>
+      <button class="btn btn-sm btn-primary" onclick="tryConnect()" style="margin-left:auto;flex-shrink:0">Connect</button>
+    </div>
+
+    <!-- ══ DASHBOARD PAGE ══ -->
+    <div class="dash-page active" id="page-dashboard">
+
+      <!-- Stat Cards -->
+      <div class="stat-grid">
+        <div class="stat-card c1 fade-in">
+          <div class="stat-top">
+            <div class="stat-label">Total Issues</div>
+            <div class="stat-icon c1"><i class="fa-solid fa-flag"></i></div>
+          </div>
+          <div class="stat-num" id="s-issues">—</div>
+          <div class="stat-change up"><i class="fa-solid fa-arrow-trend-up"></i> <span id="s-issues-pct">—</span> <span class="change-label">this month</span></div>
+        </div>
+        <div class="stat-card c2 fade-in fade-in-d1">
+          <div class="stat-top">
+            <div class="stat-label">Resolved</div>
+            <div class="stat-icon c2"><i class="fa-solid fa-circle-check"></i></div>
+          </div>
+          <div class="stat-num" id="s-resolved">—</div>
+          <div class="stat-change up"><i class="fa-solid fa-arrow-trend-up"></i> <span id="s-res-rate">—</span> <span class="change-label">resolution rate</span></div>
+        </div>
+        <div class="stat-card c4 fade-in fade-in-d2">
+          <div class="stat-top">
+            <div class="stat-label">Pending</div>
+            <div class="stat-icon c4"><i class="fa-solid fa-clock"></i></div>
+          </div>
+          <div class="stat-num" id="s-pending">—</div>
+          <div class="stat-change down"><i class="fa-solid fa-arrow-trend-down"></i> <span class="change-label">needs attention</span></div>
+        </div>
+        <div class="stat-card c3 fade-in fade-in-d3">
+          <div class="stat-top">
+            <div class="stat-label">Blood Donors</div>
+            <div class="stat-icon c3"><i class="fa-solid fa-droplet"></i></div>
+          </div>
+          <div class="stat-num" id="s-donors">—</div>
+          <div class="stat-change up"><i class="fa-solid fa-arrow-trend-up"></i> <span class="change-label">active donors</span></div>
+        </div>
+        <div class="stat-card c5 fade-in fade-in-d3">
+          <div class="stat-top">
+            <div class="stat-label">Volunteers</div>
+            <div class="stat-icon c5"><i class="fa-solid fa-hands-holding-heart"></i></div>
+          </div>
+          <div class="stat-num" id="s-volunteers">—</div>
+          <div class="stat-change up"><i class="fa-solid fa-arrow-trend-up"></i> <span class="change-label">registered</span></div>
+        </div>
+        <div class="stat-card c6 fade-in fade-in-d4">
+          <div class="stat-top">
+            <div class="stat-label">Citizens</div>
+            <div class="stat-icon c6"><i class="fa-solid fa-users"></i></div>
+          </div>
+          <div class="stat-num" id="s-users">—</div>
+          <div class="stat-change up"><i class="fa-solid fa-arrow-trend-up"></i> <span class="change-label">accounts</span></div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid-3">
+        <!-- Issues Trend -->
+        <div class="card fade-in">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Issues Overview</div>
+              <div class="card-sub">Reports submitted over time</div>
+            </div>
+            <select class="dash-select" onchange="updateTrendChart(this.value)">
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="90">Last 90 days</option>
+            </select>
+          </div>
+          <div class="card-body">
+            <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Category Breakdown -->
+        <div class="card fade-in fade-in-d1">
+          <div class="card-header">
+            <div>
+              <div class="card-title">By Category</div>
+              <div class="card-sub">Issue distribution</div>
+            </div>
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:1rem">
+            <div class="donut-wrap">
+              <canvas id="donutChart"></canvas>
+              <div class="donut-label">
+                <div class="donut-num" id="donut-total">—</div>
+                <div class="donut-sub">Total</div>
+              </div>
+            </div>
+            <div style="width:100%" id="donut-legend"></div>
+          </div>
+        </div>
+
+        <!-- Status Breakdown -->
+        <div class="card fade-in fade-in-d2">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Status Breakdown</div>
+              <div class="card-sub">Resolution pipeline</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="status-bars">
+              <div class="progress-wrap">
+                <div class="progress-top"><span class="progress-label">Resolved</span><span class="progress-val" id="pv-resolved">—</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="background:var(--green);width:0%" id="pb-resolved"></div></div>
+              </div>
+              <div class="progress-wrap">
+                <div class="progress-top"><span class="progress-label">In Progress</span><span class="progress-val" id="pv-inprogress">—</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="background:var(--accent);width:0%" id="pb-inprogress"></div></div>
+              </div>
+              <div class="progress-wrap">
+                <div class="progress-top"><span class="progress-label">Pending</span><span class="progress-val" id="pv-pending">—</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="background:var(--amber);width:0%" id="pb-pending"></div></div>
+              </div>
+              <div class="progress-wrap">
+                <div class="progress-top"><span class="progress-label">Rejected</span><span class="progress-val" id="pv-rejected">—</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="background:var(--red);width:0%" id="pb-rejected"></div></div>
+              </div>
+            </div>
+            <div class="chart-wrap-sm" style="margin-top:1rem"><canvas id="barChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Row -->
+      <div class="grid-2">
+        <!-- Recent Issues -->
+        <div class="card fade-in">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Recent Issues</div>
+              <div class="card-sub">Latest civic complaints</div>
+            </div>
+            <span class="view-all" onclick="showPage('issues',null)">View all →</span>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="dash-table" id="recentIssuesTable">
+              <thead><tr>
+                <th>Ticket</th><th>Category</th><th>Location</th><th>Status</th><th>Update</th>
+              </tr></thead>
+              <tbody id="recentIssuesBody">
+                <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <!-- Activity Feed -->
+          <div class="card fade-in fade-in-d1">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Live Activity</div>
+                <div class="card-sub">Real-time portal events</div>
+              </div>
+              <div class="tab-group">
+                <button class="tab-pill active" onclick="tabSwitch(this,'all')">All</button>
+                <button class="tab-pill" onclick="tabSwitch(this,'issues')">Issues</button>
+                <button class="tab-pill" onclick="tabSwitch(this,'donors')">Donors</button>
+              </div>
+            </div>
+            <div class="card-body" style="padding-bottom:0.5rem" id="activityFeed">
+              <div style="text-align:center;color:var(--text3);padding:2rem;font-size:0.85rem">
+                <i class="fa-solid fa-spinner fa-spin" style="margin-bottom:0.5rem;display:block"></i>
+                Loading activity…
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="card fade-in fade-in-d2">
+            <div class="card-header">
+              <div class="card-title">Quick Metrics</div>
+            </div>
+            <div class="card-body" style="padding-top:0.5rem">
+              <div class="metric-mini">
+                <div class="metric-mini-left">Avg. Resolution Time</div>
+                <div class="metric-mini-right" id="qm-restime">— days</div>
+              </div>
+              <div class="metric-mini">
+                <div class="metric-mini-left">O+ Donors Available</div>
+                <div class="metric-mini-right" id="qm-oplus">—</div>
+              </div>
+              <div class="metric-mini">
+                <div class="metric-mini-left">Active Volunteers</div>
+                <div class="metric-mini-right" id="qm-vol">—</div>
+              </div>
+              <div class="metric-mini">
+                <div class="metric-mini-left">Unread Messages</div>
+                <div class="metric-mini-right" id="qm-msg">—</div>
+              </div>
+              <div class="metric-mini">
+                <div class="metric-mini-left">Hospitals 24/7</div>
+                <div class="metric-mini-right" id="qm-hosp24">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ANALYTICS PAGE ══ -->
+    <div class="dash-page" id="page-analytics">
+      <div class="section-header"><div><div class="section-title">Analytics</div><div class="section-sub">Detailed performance insights</div></div>
+        <button class="btn btn-primary btn-sm" onclick="exportCurrentData()"><i class="fa-solid fa-download"></i> Export</button>
+      </div>
+      <div class="grid-2" style="margin-bottom:1.2rem">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Issues Trend</div></div>
+          <div class="card-body"><div class="chart-wrap"><canvas id="analyticsLine"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Category Distribution</div></div>
+          <div class="card-body"><div class="chart-wrap"><canvas id="analyticsBar"></canvas></div></div>
+        </div>
+      </div>
+      <div class="grid-3b">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Blood Group Distribution</div></div>
+          <div class="card-body"><div class="chart-wrap-sm"><canvas id="bloodChart"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Volunteer Areas</div></div>
+          <div class="card-body"><div class="chart-wrap-sm"><canvas id="volChart"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Resolution Rate</div></div>
+          <div class="card-body"><div class="chart-wrap-sm"><canvas id="resChart"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ GENERIC DATA PAGES ══ -->
+    <div class="dash-page" id="page-issues">
+      <div class="section-header">
+        <div><div class="section-title">Issues Management</div><div class="section-sub" id="issues-count">Loading…</div></div>
+        <div style="display:flex;gap:0.6rem">
+          <select class="dash-select" id="issueStatusFilter" onchange="filterTable('issues')">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="in_progress">In Progress</option>
+            <option value="resolved">Resolved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="exportCurrentData()"><i class="fa-solid fa-download"></i> CSV</button>
+        </div>
+      </div>
+      <div class="card"><div style="overflow-x:auto"><table class="dash-table" id="issuesTable">
+        <thead><tr><th>Ticket</th><th>Category</th><th>Name</th><th>Location</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody id="issuesBody"><tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text3)"><i class="fa-solid fa-spinner fa-spin"></i></td></tr></tbody>
+      </table></div></div>
+    </div>
+
+    <div class="dash-page" id="page-donors">
+      <div class="section-header">
+        <div><div class="section-title">Blood Donors</div><div class="section-sub" id="donors-count">Loading…</div></div>
+        <div style="display:flex;gap:0.6rem">
+          <select class="dash-select" id="donorBGFilter" onchange="filterTable('donors')">
+            <option value="">All Blood Groups</option>
+            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="openAddForm('donors')"><i class="fa-solid fa-plus"></i> Add Donor</button>
+        </div>
+      </div>
+      <div class="card"><div style="overflow-x:auto"><table class="dash-table">
+        <thead><tr><th>#</th><th>Name</th><th>Blood Group</th><th>Phone</th><th>City</th><th>Available</th><th>Last Donated</th></tr></thead>
+        <tbody id="donorsBody"><tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text3)"><i class="fa-solid fa-spinner fa-spin"></i></td></tr></tbody>
+      </table></div></div>
+    </div>
+
+    <div class="dash-page" id="page-volunteers">
+      <div class="section-header">
+        <div><div class="section-title">Volunteers</div><div class="section-sub" id="volunteers-count">Loading…</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openAddForm('volunteers')"><i class="fa-solid fa-plus"></i> Add Volunteer</button>
+      </div>
+      <div class="card"><div style="overflow-x:auto"><table class="dash-table">
+        <thead><tr><th>#</th><th>Name</th><th>Age</th><th>Phone</th><th>Area</th><th>Availability</th><th>Hours</th><th>Status</th></tr></thead>
+        <tbody id="volunteersBody"><tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--text3)"><i class="fa-solid fa-spinner fa-spin"></i></td></tr></tbody>
+      </table></div></div>
+    </div>
+
+    <div class="dash-page" id="page-users">
+      <div class="section-header">
+        <div><div class="section-title">Citizens</div><div class="section-sub" id="users-count">Loading…</div></div>
+      </div>
+      <div class="card"><div style="overflow-x:auto"><table class="dash-table">
+        <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>Blood Group</th><th>Role</th><th>Joined</th></tr></thead>
+        <tbody id="usersBody"><tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text3)"><i class="fa-solid fa-spinner fa-spin"></i></td></tr></tbody>
+      </table></div></div>
+    </div>
+
+    <div class="dash-page" id="page-hospitals">
+      <div class="section-header">
+        <div><div class="section-title">Hospitals & Health Centers</div><div class="section-sub" id="hospitals-count">Loading…</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openAddForm('hospitals')"><i class="fa-solid fa-plus"></i> Add Hospital</button>
+      </div>
+      <div class="card"><div style="overflow-x:auto"><table class="dash-table">
+        <thead><tr><th>#</th><th>Name</th><th>Type</th><th>Address</th><th>Phone</th><th>Beds</th><th>24/7</th></tr></thead>
+        <tbody id="hospitalsBody"><tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text3)"><i class="fa-solid fa-spinner fa-spin"></i></td></tr></tbody>
+      </table></div></div>
+    </div>
+
+    <div class="dash-page" id="page-schemes">
+      <div class="section-header">
+        <div><div class="section-title">Government Schemes</div><div class="section-sub" id="schemes-count">Loading…</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openAddForm('schemes')"><i class="fa-solid fa-plus"></i> Add Scheme</button>
+      </div>
+      <div class="card"><div style="overflow-x:auto"><table class="dash-table">
+        <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Deadline</th><th>Active</th><th>Apply Link</th></tr></thead>
+        <tbody id="schemesBody"><tr><td colspan="6" style="text-align:center;padding:3rem;color:var(--text3)"><i class="fa-solid fa-spinner fa-spin"></i></td></tr></tbody>
+      </table></div></div>
+    </div>
+
+    <div class="dash-page" id="page-messages">
+      <div class="section-header">
+        <div><div class="section-title">Messages</div><div class="section-sub" id="messages-count">Loading…</div></div>
+        <button class="btn btn-primary btn-sm" onclick="exportCurrentData()"><i class="fa-solid fa-download"></i> Export</button>
+      </div>
+      <div class="card"><div style="overflow-x:auto"><table class="dash-table">
+        <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Subject</th><th>Message</th><th>Date</th><th>Replied</th></tr></thead>
+        <tbody id="messagesBody"><tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text3)"><i class="fa-solid fa-spinner fa-spin"></i></td></tr></tbody>
+      </table></div></div>
+    </div>
+
+    <div class="dash-page" id="page-settings">
+      <div class="section-header"><div class="section-title">Settings</div></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Backend Connection</div></div>
+          <div class="card-body">
+            <div class="progress-wrap">
+              <label style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem;display:block">API Base URL</label>
+              <input id="apiUrlInput" type="text" value="http://localhost:5000/api"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:0.6rem 0.9rem;color:var(--text);font-family:var(--font-mono);font-size:0.82rem;outline:none;margin-bottom:0.8rem">
+            </div>
+            <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1rem">
+              <span style="font-size:0.82rem;color:var(--text2)">API Status:</span>
+              <span id="api-status-badge" class="badge badge-amber">⚡ Demo Mode</span>
+            </div>
+            <div style="display:flex;gap:0.7rem">
+              <button class="btn btn-primary" onclick="tryConnect()"><i class="fa-solid fa-plug"></i> Connect</button>
+              <button class="btn btn-ghost" onclick="disconnectAPI()"><i class="fa-solid fa-plug-circle-xmark"></i> Disconnect</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Portal Actions</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:0.7rem">
+            <button class="btn btn-ghost" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i> Back to CivicPulse Portal</button>
+            <button class="btn btn-ghost" onclick="refreshAll()"><i class="fa-solid fa-rotate-right"></i> Refresh All Data</button>
+            <button class="btn btn-ghost" onclick="exportAllCSV()"><i class="fa-solid fa-file-csv"></i> Export All Data</button>
+            <button class="btn btn-ghost" style="color:var(--red)" onclick="showToastMsg('Logout','Redirecting…','info');setTimeout(()=>window.close(),1000)"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- Add Form Modal -->
+<div id="addFormModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:9000;display:none;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:18px;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;animation:fadeInUp 0.25s ease">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:1.2rem 1.4rem;border-bottom:1px solid var(--border)">
+      <h3 id="addFormTitle" style="font-family:var(--font-head);font-size:1rem;font-weight:700;color:var(--accent)">Add Record</h3>
+      <button onclick="document.getElementById('addFormModal').style.display='none'" style="background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer">✕</button>
+    </div>
+    <div id="addFormFields" style="padding:1.3rem 1.4rem"></div>
+    <div style="padding:1rem 1.4rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:0.7rem">
+      <button class="btn btn-ghost" onclick="document.getElementById('addFormModal').style.display='none'">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAddForm()"><i class="fa-solid fa-check"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Stack -->
+<div class="toast-stack" id="toastStack"></div>
+
+<script>
+/* ══════════════════════════════════════════════
+   CIVICPULSE ADMIN DASHBOARD
+══════════════════════════════════════════════ */
+
+const API_BASE = 'http://localhost:5000/api';
+let API_LIVE = false;
+let currentPage = 'dashboard';
+let pageData = {};   // cache per page
+let charts = {};     // chart instances
+let addFormTarget = '';
+
+/* ── Demo / seed data ── */
+const DEMO = {
+  stats: { issues_reported:0, issues_resolved:0, blood_donors:0, volunteers:0, users:0, hospitals:0 },
+  issues: [],
+  donors: [],
+  volunteers: [],
+  users: [],
+  hospitals: [],
+  schemes: [],
+  messages: []
+};
+
+/* ── API / Data helper ── */
+async function fetchData(endpoint) {
+  if (!API_LIVE) return null;
+  try {
+    const token = window._authToken || sessionStorage.getItem('cp_dash_token') || localStorage.getItem('cp_token');
+    const headers = {'Content-Type':'application/json'};
+    if (token) headers['Authorization'] = 'Bearer '+token;
+    const r = await fetch(API_BASE + endpoint, {headers});
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+async function postData(endpoint, body) {
+  if (!API_LIVE) return null;
+  try {
+    const token = window._authToken || sessionStorage.getItem('cp_dash_token') || localStorage.getItem('cp_token');
+    const headers = {'Content-Type':'application/json'};
+    if (token) headers['Authorization'] = 'Bearer '+token;
+    const r = await fetch(API_BASE + endpoint, {method:'POST',headers,body:JSON.stringify(body)});
+    return await r.json();
+  } catch { return null; }
+}
+
+async function patchData(endpoint, body) {
+  if (!API_LIVE) return null;
+  try {
+    const token = window._authToken || sessionStorage.getItem('cp_dash_token') || localStorage.getItem('cp_token');
+    const headers = {'Content-Type':'application/json'};
+    if (token) headers['Authorization'] = 'Bearer '+token;
+    const r = await fetch(API_BASE + endpoint, {method:'PATCH',headers,body:JSON.stringify(body)});
+    return await r.json();
+  } catch { return null; }
+}
+
+/* ── Page navigation ── */
+function showPage(name, el) {
+  document.querySelectorAll('.dash-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById('page-'+name);
+  if (page) page.classList.add('active');
+  if (el) el.classList.add('active');
+  else {
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.onclick && n.onclick.toString().includes("'"+name+"'")) n.classList.add('active');
+    });
+  }
+  currentPage = name;
+  const titles = {
+    dashboard:'Dashboard', analytics:'Analytics', issues:'Issues',
+    donors:'Blood Donors', volunteers:'Volunteers', users:'Citizens',
+    hospitals:'Hospitals', schemes:'Schemes', messages:'Messages', settings:'Settings'
+  };
+  document.getElementById('topbar-title').textContent = titles[name] || name;
+  document.getElementById('topbar-sub').textContent = 'CivicPulse Admin — ' + (titles[name]||name);
+  loadPageData(name);
+}
+
+function goBack() {
+  if (window.opener && !window.opener.closed) {
+    window.opener.focus();
+    window.close();
+  } else {
+    // Try to navigate to portal
+    window.location.href = 'smart-community-portal.html';
+  }
+}
+
+/* ── Load page data ── */
+async function loadPageData(name) {
+  if (name === 'dashboard') { loadDashboard(); return; }
+  if (name === 'analytics') { loadAnalytics(); return; }
+  if (name === 'settings') return;
+
+  const endpointMap = {
+    issues:'/issues',donors:'/donors',volunteers:'/volunteers',
+    users:'/users',hospitals:'/hospitals',schemes:'/schemes',messages:'/contacts'
+  };
+  const ep = endpointMap[name];
+  if (!ep) return;
+
+  const live = await fetchData(ep);
+  const data = live || DEMO[name] || [];
+  pageData[name] = data;
+
+  const bodyMap = {
+    issues: renderIssuesTable, donors: renderDonorsTable,
+    volunteers: renderVolsTable, users: renderUsersTable,
+    hospitals: renderHospitalsTable, schemes: renderSchemesTable,
+    messages: renderMessagesTable
+  };
+  if (bodyMap[name]) bodyMap[name](data);
+
+  const countEl = document.getElementById(name+'-count');
+  if (countEl) countEl.textContent = data.length + ' records' + (live?'':' — connect backend to load live data');
+}
+
+/* ── Dashboard ── */
+async function loadDashboard() {
+  const live = await fetchData('/stats');
+  const s = live || DEMO.stats;
+
+  const total = s.issues_reported || 0;
+  const resolved = s.issues_resolved || 0;
+  const pending = total - resolved;
+  const rate = total ? Math.round((resolved/total)*100) : 0;
+
+  setEl('s-issues', total);
+  setEl('s-resolved', resolved);
+  setEl('s-pending', pending);
+  setEl('s-donors', s.blood_donors || s.donors || 0);
+  setEl('s-volunteers', s.volunteers || 0);
+  setEl('s-users', s.users || 0);
+  setEl('s-issues-pct', live ? '+—%' : '—');
+  setEl('s-res-rate', rate ? rate+'%' : '—');
+  setEl('donut-total', total || '—');
+  setEl('nb-pending', pending || '—');
+  setEl('qm-restime', '—');
+  setEl('qm-oplus', '—');
+  setEl('qm-vol', s.volunteers || '—');
+  setEl('qm-msg', '—');
+  setEl('qm-hosp24', '—');
+
+  // Status progress
+  const inprog = Math.round(total * 0.15);
+  const rej    = Math.round(total * 0.05);
+  updateProgress('resolved',  resolved, total, '#22d37a');
+  updateProgress('inprogress', inprog,  total, '#7c6df0');
+  updateProgress('pending',    pending - inprog - rej, total, '#ffb547');
+  updateProgress('rejected',   rej,    total, '#ff5c7c');
+
+  // Recent issues
+  const issuesLive = await fetchData('/issues?limit=6');
+  const issues = issuesLive || DEMO.issues;
+  renderRecentIssues(issues.slice(0,6));
+
+  // Activity feed
+  renderActivity(issues.slice(0,8));
+
+  buildCharts(s, issues);
+}
+
+function updateProgress(id, val, total, color) {
+  const pct = total ? Math.round((val/total)*100) : 0;
+  setEl('pv-'+id, val+'  ('+pct+'%)');
+  const bar = document.getElementById('pb-'+id);
+  if (bar) { bar.style.background = color; setTimeout(()=>bar.style.width=pct+'%', 200); }
+}
+
+function renderRecentIssues(issues) {
+  const tbody = document.getElementById('recentIssuesBody');
+  if (!tbody) return;
+  tbody.innerHTML = issues.map(i => `
+    <tr>
+      <td><span style="font-family:var(--font-mono);font-size:0.78rem;color:var(--accent)">${i.ticket_no||'—'}</span></td>
+      <td>${cap(i.category)}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.location||'—'}</td>
+      <td><span class="badge ${statusBadge(i.status)}">${i.status?.replace('_',' ')||'—'}</span></td>
+      <td>
+        <select class="status-select badge ${statusBadge(i.status)}" onchange="updateStatus(${i.id},this.value,this)">
+          <option value="pending"    ${i.status==='pending'?'selected':''}>Pending</option>
+          <option value="in_progress"${i.status==='in_progress'?'selected':''}>In Progress</option>
+          <option value="resolved"   ${i.status==='resolved'?'selected':''}>Resolved</option>
+          <option value="rejected"   ${i.status==='rejected'?'selected':''}>Rejected</option>
+        </select>
+      </td>
+    </tr>`).join('');
+}
+
+function renderActivity(items) {
+  const el = document.getElementById('activityFeed');
+  if (!el) return;
+  const icons = {road:'fa-road',garbage:'fa-trash',water:'fa-faucet-drip',streetlight:'fa-lightbulb',sewer:'fa-water',other:'fa-flag'};
+  const cols  = {resolved:'green',pending:'amber',in_progress:'purple',rejected:'red'};
+  el.innerHTML = items.map(i => `
+    <div class="activity-item">
+      <div class="activity-dot ${cols[i.status]||'cyan'}"><i class="fa-solid ${icons[i.category]||'fa-flag'}"></i></div>
+      <div class="activity-text">
+        <div class="activity-title">${cap(i.category)} reported — ${i.location||'Unknown'}</div>
+        <div class="activity-meta">${i.name||'Citizen'} · ${i.ticket_no}</div>
+      </div>
+      <div class="activity-time">${fmtDate(i.created_at)}</div>
+    </div>`).join('');
+}
+
+/* ── Table renders ── */
+function renderIssuesTable(data) {
+  const b = document.getElementById('issuesBody');
+  if (!b) return;
+  const f = document.getElementById('issueStatusFilter');
+  const filter = f ? f.value : '';
+  const rows = filter ? data.filter(r => r.status === filter) : data;
+  b.innerHTML = rows.length ? rows.map(i => `
+    <tr>
+      <td><span style="font-family:var(--font-mono);font-size:0.78rem;color:var(--accent)">${i.ticket_no||i.id}</span></td>
+      <td><span class="badge badge-purple">${cap(i.category)}</span></td>
+      <td>${i.name||'—'}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.location||'—'}</td>
+      <td><span class="badge ${statusBadge(i.status)}">${i.status?.replace('_',' ')||'—'}</span></td>
+      <td style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text3)">${fmtDate(i.created_at)}</td>
+      <td>
+        <select class="status-select badge ${statusBadge(i.status)}" onchange="updateStatus(${i.id},this.value,this)">
+          <option value="pending"    ${i.status==='pending'?'selected':''}>Pending</option>
+          <option value="in_progress"${i.status==='in_progress'?'selected':''}>In Progress</option>
+          <option value="resolved"   ${i.status==='resolved'?'selected':''}>Resolved</option>
+          <option value="rejected"   ${i.status==='rejected'?'selected':''}>Rejected</option>
+        </select>
+      </td>
+    </tr>`).join('') : emptyRow(7, 'No issues found');
+}
+
+function renderDonorsTable(data) {
+  const b = document.getElementById('donorsBody');
+  if (!b) return;
+  const f = document.getElementById('donorBGFilter');
+  const filter = f ? f.value : '';
+  const rows = filter ? data.filter(r => r.blood_group === filter) : data;
+  b.innerHTML = rows.length ? rows.map((d,i) => `
+    <tr>
+      <td style="color:var(--text3);font-family:var(--font-mono)">${i+1}</td>
+      <td>${d.name}</td>
+      <td><span class="badge badge-red">${d.blood_group}</span></td>
+      <td style="font-family:var(--font-mono)">${d.phone||'—'}</td>
+      <td>${d.city||'—'}</td>
+      <td><span class="badge ${d.available?'badge-green':'badge-red'}">${d.available?'Available':'Unavailable'}</span></td>
+      <td style="color:var(--text3)">${d.last_donated||'—'}</td>
+    </tr>`).join('') : emptyRow(7, 'No donors found');
+}
+
+function renderVolsTable(data) {
+  const b = document.getElementById('volunteersBody');
+  if (!b) return;
+  b.innerHTML = data.length ? data.map((v,i) => `
+    <tr>
+      <td style="color:var(--text3);font-family:var(--font-mono)">${i+1}</td>
+      <td>${v.name}</td>
+      <td style="font-family:var(--font-mono)">${v.age||'—'}</td>
+      <td style="font-family:var(--font-mono)">${v.phone||'—'}</td>
+      <td><span class="badge badge-cyan">${v.area||'—'}</span></td>
+      <td style="color:var(--text2)">${v.availability||'—'}</td>
+      <td style="font-family:var(--font-mono)">${v.hours_logged||0} hrs</td>
+      <td><span class="badge ${v.status==='active'?'badge-green':'badge-grey'}">${v.status||'—'}</span></td>
+    </tr>`).join('') : emptyRow(8,'No volunteers found');
+}
+
+function renderUsersTable(data) {
+  const b = document.getElementById('usersBody');
+  if (!b) return;
+  b.innerHTML = data.length ? data.map((u,i) => `
+    <tr>
+      <td style="color:var(--text3);font-family:var(--font-mono)">${i+1}</td>
+      <td>${u.name}</td>
+      <td style="color:var(--text2)">${u.email}</td>
+      <td style="font-family:var(--font-mono)">${u.phone||'—'}</td>
+      <td><span class="badge badge-amber">${u.blood_group||'—'}</span></td>
+      <td><span class="badge ${u.role==='admin'?'badge-purple':'badge-grey'}">${u.role}</span></td>
+      <td style="color:var(--text3);font-family:var(--font-mono);font-size:0.75rem">${fmtDate(u.created_at)}</td>
+    </tr>`).join('') : emptyRow(7,'No users found');
+}
+
+function renderHospitalsTable(data) {
+  const b = document.getElementById('hospitalsBody');
+  if (!b) return;
+  b.innerHTML = data.length ? data.map((h,i) => `
+    <tr>
+      <td style="color:var(--text3);font-family:var(--font-mono)">${i+1}</td>
+      <td>${h.name}</td>
+      <td><span class="badge badge-cyan">${h.type||'—'}</span></td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${h.address||'—'}</td>
+      <td style="font-family:var(--font-mono)">${h.phone||'—'}</td>
+      <td style="font-family:var(--font-mono)">${h.beds||0}</td>
+      <td><span class="badge ${h.open_24h?'badge-green':'badge-grey'}">${h.open_24h?'24/7':'OPD'}</span></td>
+    </tr>`).join('') : emptyRow(7,'No hospitals found');
+}
+
+function renderSchemesTable(data) {
+  const b = document.getElementById('schemesBody');
+  if (!b) return;
+  b.innerHTML = data.length ? data.map((s,i) => `
+    <tr>
+      <td style="color:var(--text3);font-family:var(--font-mono)">${i+1}</td>
+      <td>${s.title}</td>
+      <td><span class="badge badge-purple">${s.category}</span></td>
+      <td style="font-family:var(--font-mono);color:var(--text3)">${s.deadline||'—'}</td>
+      <td><span class="badge ${s.active?'badge-green':'badge-grey'}">${s.active?'Active':'Inactive'}</span></td>
+      <td>${s.apply_link?`<a href="${s.apply_link}" target="_blank" style="color:var(--accent);font-size:0.78rem">Apply →</a>`:'—'}</td>
+    </tr>`).join('') : emptyRow(6,'No schemes found');
+}
+
+function renderMessagesTable(data) {
+  const b = document.getElementById('messagesBody');
+  if (!b) return;
+  b.innerHTML = data.length ? data.map((m,i) => `
+    <tr>
+      <td style="color:var(--text3);font-family:var(--font-mono)">${i+1}</td>
+      <td>${m.name}</td>
+      <td style="color:var(--text2)">${m.email}</td>
+      <td>${m.subject||'—'}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${m.message||'—'}</td>
+      <td style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text3)">${fmtDate(m.created_at)}</td>
+      <td><span class="badge ${m.replied?'badge-green':'badge-amber'}">${m.replied?'Replied':'Pending'}</span></td>
+    </tr>`).join('') : emptyRow(7,'No messages found');
+}
+
+/* ── Charts ── */
+const CHART_DEFAULTS = {
+  color: 'rgba(124,109,240,',
+  grid: 'rgba(255,255,255,0.05)',
+  font: '#7c82a8',
+};
+
+function buildCharts(s, issues) {
+  // Trend line chart — no real data until backend connected
+  const labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const trendData = [0,0,0,0,0,0,0];
+  const trendData2= [0,0,0,0,0,0,0];
+  destroyChart('trendChart');
+  const ctx1 = document.getElementById('trendChart');
+  if (ctx1) {
+    charts.trendChart = new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label:'This Week', data: trendData, borderColor:'#7c6df0', backgroundColor:'rgba(124,109,240,0.12)', tension:0.4, fill:true, pointBackgroundColor:'#7c6df0', pointRadius:4 },
+          { label:'Last Week', data: trendData2, borderColor:'rgba(255,255,255,0.2)', backgroundColor:'transparent', tension:0.4, fill:false, pointRadius:3, borderDash:[4,4] }
+        ]
+      },
+      options: chartOpts({ legend: true })
+    });
+  }
+
+  // Category breakdown — placeholder until backend connected
+  const categories = ['Road','Garbage','Water','Streetlight','Sewer','Other'];
+  const catData    = [0, 0, 0, 0, 0, 0];
+  const catColors  = ['#7c6df0','#22d37a','#ffb547','#ff5c7c','#22d4ee','#f06292'];
+  destroyChart('donutChart');
+  const ctx2 = document.getElementById('donutChart');
+  if (ctx2) {
+    charts.donutChart = new Chart(ctx2, {
+      type: 'doughnut',
+      data: { labels: categories, datasets:[{data:catData,backgroundColor:catColors,borderWidth:0,hoverOffset:6}] },
+      options: { cutout:'68%', plugins:{ legend:{display:false}, tooltip:{callbacks:{label: c => ' '+c.label+': '+c.parsed+'%'}}}, animation:{animateRotate:true,duration:800} }
+    });
+    // Legend
+    const leg = document.getElementById('donut-legend');
+    if (leg) leg.innerHTML = categories.map((c,i) => `<div class="legend-item"><div class="legend-dot" style="background:${catColors[i]}"></div>${c} <span style="margin-left:auto;font-family:var(--font-mono);font-size:0.73rem">${catData[i]}%</span></div>`).join('');
+  }
+
+  // Bar chart (small)
+  destroyChart('barChart');
+  const ctx3 = document.getElementById('barChart');
+  if (ctx3) {
+    charts.barChart = new Chart(ctx3, {
+      type: 'bar',
+      data: { labels: categories, datasets:[{data:catData,backgroundColor:catColors,borderRadius:5,borderWidth:0}] },
+      options: chartOpts({ legend:false, xGrid:false })
+    });
+  }
+}
+
+function loadAnalytics() {
+  const labels30 = Array.from({length:30},(_,i)=>{ const d=new Date(); d.setDate(d.getDate()-29+i); return d.toLocaleDateString('en',{month:'short',day:'numeric'}); });
+  const rand30 = () => Array.from({length:30},()=>0);
+
+  destroyChart('analyticsLine');
+  const aL = document.getElementById('analyticsLine');
+  if (aL) charts.analyticsLine = new Chart(aL, {
+    type:'line',
+    data:{ labels:labels30, datasets:[
+      {label:'Reported',data:rand30(),borderColor:'#7c6df0',backgroundColor:'rgba(124,109,240,0.1)',tension:0.4,fill:true},
+      {label:'Resolved',data:rand30(),borderColor:'#22d37a',backgroundColor:'rgba(34,211,122,0.08)',tension:0.4,fill:true}
+    ]},
+    options: chartOpts({legend:true})
+  });
+
+  destroyChart('analyticsBar');
+  const aB = document.getElementById('analyticsBar');
+  if (aB) charts.analyticsBar = new Chart(aB, {
+    type:'bar',
+    data:{ labels:['Road','Garbage','Water','Streetlight','Sewer','Other'],
+      datasets:[{data:[0,0,0,0,0,0],backgroundColor:['#7c6df0','#22d37a','#ffb547','#ff5c7c','#22d4ee','#f06292'],borderRadius:6}]},
+    options: chartOpts({legend:false})
+  });
+
+  destroyChart('bloodChart');
+  const bC = document.getElementById('bloodChart');
+  if (bC) charts.bloodChart = new Chart(bC, {
+    type:'doughnut',
+    data:{labels:['O+','A+','B+','AB+','O-','A-','B-','AB-'],datasets:[{data:[0,0,0,0,0,0,0,0],backgroundColor:['#ff5c7c','#7c6df0','#22d37a','#22d4ee','#ffb547','#f06292','#a78bfa','#34d399'],borderWidth:0}]},
+    options:{cutout:'60%',plugins:{legend:{display:false}}}
+  });
+
+  destroyChart('volChart');
+  const vC = document.getElementById('volChart');
+  if (vC) charts.volChart = new Chart(vC, {
+    type:'doughnut',
+    data:{labels:['Medical','Food','Education','Disaster','Elder Care','Environmental'],datasets:[{data:[0,0,0,0,0,0],backgroundColor:['#22d4ee','#ffb547','#7c6df0','#ff5c7c','#22d37a','#f06292'],borderWidth:0}]},
+    options:{cutout:'60%',plugins:{legend:{display:false}}}
+  });
+
+  destroyChart('resChart');
+  const rC = document.getElementById('resChart');
+  if (rC) charts.resChart = new Chart(rC, {
+    type:'bar',
+    data:{labels:['Jan','Feb','Mar','Apr','May','Jun'],datasets:[
+      {label:'Resolved',data:[0,0,0,0,0,0],backgroundColor:'rgba(34,211,122,0.6)',borderRadius:5},
+      {label:'Reported',data:[0,0,0,0,0,0],backgroundColor:'rgba(124,109,240,0.4)',borderRadius:5}
+    ]},
+    options:chartOpts({legend:true})
+  });
+}
+
+function chartOpts({ legend=false, xGrid=true }) {
+  return {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:legend, labels:{color:'#7c82a8',font:{size:11},boxWidth:10,padding:12} }, tooltip:{backgroundColor:'rgba(13,15,26,0.95)',titleColor:'#e8eaf6',bodyColor:'#7c82a8',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,padding:10} },
+    scales:{
+      x:{ grid:{display:xGrid,color:'rgba(255,255,255,0.04)'}, ticks:{color:'#7c82a8',font:{size:10}} },
+      y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#7c82a8',font:{size:10}} }
+    }
+  };
+}
+
+function updateTrendChart(days) {
+  if (!charts.trendChart) return;
+  const n = parseInt(days);
+  const labels = Array.from({length:n},(_,i)=>{ const d=new Date(); d.setDate(d.getDate()-n+1+i); return d.toLocaleDateString('en',{month:'short',day:'numeric'}); });
+  charts.trendChart.data.labels = labels;
+  charts.trendChart.data.datasets[0].data = Array.from({length:n},()=>0);
+  charts.trendChart.data.datasets[1].data = Array.from({length:n},()=>0);
+  charts.trendChart.update();
+}
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+/* ── Actions ── */
+async function updateStatus(id, status, el) {
+  if (!status) return;
+  const data = await patchData('/issues/'+id+'/status', {status});
+  if (data || !API_LIVE) {
+    // Update demo data
+    if (DEMO.issues) { const i = DEMO.issues.find(x=>x.id===id); if(i) i.status=status; }
+    showToastMsg('Updated','Issue #'+id+' → '+status.replace('_',' '),'success');
+    // Reload if on issues page
+    if (currentPage === 'issues') loadPageData('issues');
+    if (currentPage === 'dashboard') loadDashboard();
+  }
+}
+
+function filterTable(name) {
+  const data = pageData[name] || DEMO[name] || [];
+  const renders = {issues:renderIssuesTable,donors:renderDonorsTable};
+  if (renders[name]) renders[name](data);
+}
+
+/* ── Add Form ── */
+const FORMS = {
+  donors:    [{name:'name',label:'Full Name',type:'text',req:true},{name:'blood_group',label:'Blood Group',type:'select',opts:['A+','A-','B+','B-','O+','O-','AB+','AB-'],req:true},{name:'phone',label:'Phone',type:'tel',req:true},{name:'city',label:'City',type:'text',req:true}],
+  volunteers:[{name:'name',label:'Full Name',type:'text',req:true},{name:'age',label:'Age',type:'number'},{name:'email',label:'Email',type:'email',req:true},{name:'phone',label:'Phone',type:'tel',req:true},{name:'area',label:'Area',type:'select',opts:['Medical Aid','Food Distribution','Education Support','Disaster Relief','Environmental','Elder Care']},{name:'availability',label:'Availability',type:'select',opts:['Weekends only','Weekday evenings','Full-time','Emergency only']}],
+  hospitals: [{name:'name',label:'Name',type:'text',req:true},{name:'type',label:'Type',type:'select',opts:['Government','Primary Health','Blood Bank','Specialty','Private']},{name:'address',label:'Address',type:'text',req:true},{name:'phone',label:'Phone',type:'tel'},{name:'beds',label:'Beds',type:'number'},{name:'open_24h',label:'Open 24/7',type:'select',opts:['1','0']}],
+  schemes:   [{name:'title',label:'Title',type:'text',req:true},{name:'category',label:'Category',type:'select',opts:['Housing','Health','Education','Women','Agriculture','Sanitation']},{name:'description',label:'Description',type:'textarea',req:true},{name:'apply_link',label:'Apply URL',type:'url'},{name:'deadline',label:'Deadline',type:'date'}],
+};
+
+function openAddForm(type) {
+  addFormTarget = type;
+  const fields = FORMS[type];
+  if (!fields) return;
+  document.getElementById('addFormTitle').textContent = 'Add New ' + cap(type.slice(0,-1));
+  document.getElementById('addFormFields').innerHTML = fields.map(f => {
+    let inp = '';
+    if (f.type==='select') inp = `<select id="af-${f.name}" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.8rem;color:var(--text);font-family:var(--font-body);outline:none"><option value="">Select…</option>${f.opts.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`;
+    else if (f.type==='textarea') inp = `<textarea id="af-${f.name}" rows="3" placeholder="${f.label}…" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.8rem;color:var(--text);font-family:var(--font-body);resize:vertical;outline:none"></textarea>`;
+    else inp = `<input type="${f.type}" id="af-${f.name}" placeholder="${f.label}…" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.8rem;color:var(--text);font-family:var(--font-body);outline:none">`;
+    return `<div style="margin-bottom:0.9rem"><label style="display:block;font-size:0.78rem;color:var(--text2);margin-bottom:0.35rem">${f.label}${f.req?' *':''}</label>${inp}</div>`;
+  }).join('');
+  document.getElementById('addFormModal').style.display = 'flex';
+}
+
+async function submitAddForm() {
+  const fields = FORMS[addFormTarget];
+  if (!fields) return;
+  const payload = {};
+  let valid = true;
+  fields.forEach(f => {
+    const el = document.getElementById('af-'+f.name);
+    if (el) { payload[f.name]=el.value; if(f.req&&!el.value) valid=false; }
+  });
+  if (!valid) { showToastMsg('Missing Fields','Fill all required fields.','error'); return; }
+
+  const endpoints = {donors:'/donors',volunteers:'/volunteers',hospitals:'/hospitals',schemes:'/schemes'};
+  const data = await postData(endpoints[addFormTarget], payload);
+  if (data?.id || !API_LIVE) {
+    showToastMsg('Added!','New record created successfully.','success');
+    document.getElementById('addFormModal').style.display = 'none';
+    loadPageData(addFormTarget);
+  }
+}
+
+/* ── Connect ── */
+async function tryConnect() {
+  showToastMsg('Connecting','Testing backend connection…','info');
+  try {
+    const url = document.getElementById('apiUrlInput')?.value || API_BASE;
+    const r = await fetch(url.replace('/api','')+'/api/health', {signal:AbortSignal.timeout(3000)});
+    if (r.ok) {
+      API_LIVE = true;
+      setEl('api-status-badge','✅ Connected');
+      document.getElementById('api-status-badge').className='badge badge-green';
+      document.getElementById('apiBanner').innerHTML='<i class="fa-solid fa-circle-check" style="color:var(--green)"></i><span>✅ Backend connected to <code>'+url+'</code> — showing live data.</span>';
+      showToastMsg('Connected!','Backend is live. Loading real data…','success');
+      refreshAll();
+    } else throw new Error('Not OK');
+  } catch {
+    showToastMsg('Failed','Cannot reach backend. Check that server.js is running.','error');
+  }
+}
+
+function disconnectAPI() {
+  API_LIVE = false;
+  document.getElementById('apiBanner').innerHTML='<i class="fa-solid fa-circle-info"></i><span>Disconnected. Connect your backend API in Settings to load live data.</span><button class="btn btn-sm btn-primary" onclick="tryConnect()" style="margin-left:auto;flex-shrink:0">Connect</button>';
+  showToastMsg('Disconnected','Connect backend in Settings to load data.','info');
+  refreshAll();
+}
+
+function refreshAll() {
+  loadPageData(currentPage);
+}
+
+/* ── Export ── */
+function exportCurrentData() {
+  const data = pageData[currentPage] || DEMO[currentPage] || [];
+  if (!data.length) { showToastMsg('No Data','Nothing to export.','error'); return; }
+  const cols = Object.keys(data[0]).filter(k=>k!=='password');
+  const csv = [cols.join(','), ...data.map(r=>cols.map(c=>JSON.stringify(r[c]??'')).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'civicpulse_'+currentPage+'_'+Date.now()+'.csv';
+  a.click();
+  showToastMsg('Exported','CSV downloaded.','success');
+}
+
+function exportAllCSV() {
+  showToastMsg('Export','Individual page exports available from each page.','info');
+}
+
+/* ── Search ── */
+function globalSearch(val) {
+  if (!val || val.length < 2) return;
+  const data = (pageData[currentPage] || DEMO[currentPage] || []).filter(r =>
+    Object.values(r).some(v => String(v).toLowerCase().includes(val.toLowerCase()))
+  );
+  showToastMsg('Search', data.length + ' match(es) in ' + currentPage, 'info');
+}
+
+/* ── Toast ── */
+function showToastMsg(title, body, type='info') {
+  const icons = {success:'fa-circle-check',error:'fa-circle-xmark',info:'fa-circle-info',warning:'fa-triangle-exclamation'};
+  const cols  = {success:'var(--green)',error:'var(--red)',info:'var(--accent)',warning:'var(--amber)'};
+  const stack = document.getElementById('toastStack');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<i class="fa-solid ${icons[type]}" style="color:${cols[type]};margin-top:2px" class="toast-icon"></i><div><div class="toast-title">${title}</div><div class="toast-body">${body}</div></div>`;
+  stack.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(20px)'; t.style.transition='all 0.3s'; setTimeout(()=>t.remove(),300); },4000);
+}
+
+/* ── Tab switch ── */
+function tabSwitch(btn, type) {
+  btn.closest('.tab-group').querySelectorAll('.tab-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ── Utilities ── */
+function setEl(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
+function cap(s) { return s ? s.charAt(0).toUpperCase()+s.slice(1).replace('_',' ') : '—'; }
+function fmtDate(d) { if(!d) return '—'; try{ return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}); }catch{return d;} }
+function emptyRow(cols, msg) { return `<tr><td colspan="${cols}" style="text-align:center;padding:2.5rem;color:var(--text3);font-size:0.85rem">${msg}</td></tr>`; }
+function statusBadge(s) {
+  return {pending:'badge-amber',in_progress:'badge-purple',resolved:'badge-green',rejected:'badge-red',active:'badge-green',inactive:'badge-grey',admin:'badge-purple',citizen:'badge-grey'}[s]||'badge-grey';
+}
+
+/* ── Init ── */
+window.onload = function() {
+  // Date badge
+  const now = new Date();
+  const el = document.getElementById('dateBadge');
+  if (el) el.textContent = now.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+
+  // Restore auth from portal (sessionStorage) or localStorage
+  try {
+    const tok  = sessionStorage.getItem('cp_dash_token') || localStorage.getItem('cp_token');
+    const user = JSON.parse(sessionStorage.getItem('cp_dash_user') || localStorage.getItem('cp_user') || 'null');
+    if (tok) {
+      // Inject token into fetchData headers automatically
+      window._authToken = tok;
+    }
+    if (user) {
+      setEl('admin-name', user.name || 'Admin');
+      // Check admin role
+      if (user.role !== 'admin') {
+        showToastMsg('Access Restricted', 'Admin role required to access this panel.', 'warning');
+      }
+    }
+  } catch(e) {}
+
+  // Try auto-connect to backend
+  autoConnect();
+
+  // Start dashboard
+  loadDashboard();
+};
+
+/* ── Auto connect to backend ── */
+async function autoConnect() {
+  try {
+    const r = await fetch(API_BASE.replace('/api','') + '/api/health', {signal: AbortSignal.timeout(2500)});
+    if (r.ok) {
+      API_LIVE = true;
+      const banner = document.getElementById('apiBanner');
+      if (banner) banner.innerHTML = '<i class="fa-solid fa-circle-check" style="color:var(--green)"></i><span>✅ Backend connected — showing live data from <code>' + API_BASE + '</code></span>';
+      const badge = document.getElementById('api-status-badge');
+      if (badge) { badge.textContent = '✅ Connected'; badge.className = 'badge badge-green'; }
+      // Reload with live data
+      loadDashboard();
+    }
+  } catch { /* demo mode */ }
+}
+</script>
+</body>
+</html>

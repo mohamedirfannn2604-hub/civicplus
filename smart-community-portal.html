@@ -1663,6 +1663,46 @@ footer::before, footer::after { display: none; }
 }
 
 </style>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+  import {
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    signOut, onAuthStateChanged, updateProfile
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, collection, addDoc, getDocs, getDoc, doc, setDoc,
+    updateDoc, deleteDoc, query, where, orderBy, limit, onSnapshot,
+    serverTimestamp, increment
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD4GlQGdYF0DFJlPxJ0MOUJg0vEqyHZssI",
+    authDomain: "smart-community-portal.firebaseapp.com",
+    projectId: "smart-community-portal",
+    storageBucket: "smart-community-portal.firebasestorage.app",
+    messagingSenderId: "719797226367",
+    appId: "1:719797226367:web:493cfb9108f347ebbe684a",
+    measurementId: "G-0HXC6FEE5B"
+  };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(fbApp);
+  const auth = getAuth(fbApp);
+  const db = getFirestore(fbApp);
+
+  // Expose to global window for use in the main (non-module) script below
+  window.fb = {
+    app: fbApp, analytics, auth, db,
+    createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
+    onAuthStateChanged, updateProfile,
+    collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc,
+    query, where, orderBy, limit, onSnapshot, serverTimestamp, increment
+  };
+
+  // Signal that Firebase is ready
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -1685,7 +1725,7 @@ footer::before, footer::after { display: none; }
     <a href="#" data-page="page-schemes" onclick="navigate('page-schemes')">Schemes</a>
     <a href="#" data-page="page-chatbot" onclick="navigate('page-chatbot')">AI Chat</a>
     <a href="#" data-page="page-contact" onclick="navigate('page-contact')">Contact</a>
-    <a href="#" onclick="openAdminDashboard()" id="adminNavLink" style="display:none;color:#ffd700;font-weight:600;display:none;align-items:center;gap:0.4rem" id="adminNavLink"><i class="fa-solid fa-gauge-high"></i> Admin</a>
+    <a href="#" onclick="openAdminDashboard()" id="adminNavLink" style="display:none;color:#ffd700;font-weight:600;align-items:center;gap:0.4rem"><i class="fa-solid fa-gauge-high"></i> Admin</a>
   </div>
   <div class="nav-right">
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn"><i class="fa-solid fa-moon"></i></button>
@@ -2633,10 +2673,10 @@ footer::before, footer::after { display: none; }
         <div style="display:flex;gap:1rem;align-items:flex-start"><div style="width:42px;height:42px;border-radius:10px;background:rgba(0,180,255,0.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0"><i class="fa-solid fa-clock"></i></div><div><strong>Support Hours</strong><br><span style="font-size:0.87rem;color:var(--text2)">Mon–Sat · 9AM–7PM IST<br>Emergency line 24/7 (108 / 100 / 101)</span></div></div>
       </div>
       <div class="report-form">
-        <div class="form-row"><div class="form-group" style="margin-bottom:0"><label>Name</label><input type="text" placeholder="Your name"></div><div class="form-group" style="margin-bottom:0"><label>Email</label><input type="email" placeholder="you@email.com"></div></div>
-        <div class="form-group" style="margin-top:1rem"><label>Subject</label><input type="text" placeholder="How can we help?"></div>
-        <div class="form-group"><label>Message</label><textarea placeholder="Write your message…" style="min-height:130px"></textarea></div>
-        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:0.85rem" onclick="showToast('Message Sent!','We will get back to you within 24 hours.','success')"><i class="fa-solid fa-paper-plane"></i> Send Message</button>
+        <div class="form-row"><div class="form-group" style="margin-bottom:0"><label>Name</label><input id="contact-name" type="text" placeholder="Your name"></div><div class="form-group" style="margin-bottom:0"><label>Email</label><input id="contact-email" type="email" placeholder="you@email.com"></div></div>
+        <div class="form-group" style="margin-top:1rem"><label>Subject</label><input id="contact-subject" type="text" placeholder="How can we help?"></div>
+        <div class="form-group"><label>Message</label><textarea id="contact-message" placeholder="Write your message…" style="min-height:130px"></textarea></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:0.85rem" onclick="handleContactSubmit()"><i class="fa-solid fa-paper-plane"></i> Send Message</button>
       </div>
     </div>
   </div>
@@ -2801,7 +2841,7 @@ footer::before, footer::after { display: none; }
       <div class="admin-empty-state" id="adminEmptyState">
         <i class="fa-solid fa-spinner fa-spin"></i>
         <p>Loading data…</p>
-        <small>Make sure backend is running on localhost:5000</small>
+        <small>Connected to Firebase — data loads automatically</small>
       </div>
       <div class="admin-table-scroll" id="adminTableScroll" style="display:none">
         <table class="admin-data-table" id="adminDataTable">
@@ -2867,11 +2907,12 @@ footer::before, footer::after { display: none; }
     </div>
     <div class="footer-bottom">
       <p>© 2026 CivicPulse Admin Panel. Secure Access Only.</p>
-      <p>Backend: <code style="color:rgba(255,200,0,0.6);font-size:0.75rem">localhost:5000/api</code></p>
+      <p>Backend: <code style="color:rgba(255,200,0,0.6);font-size:0.75rem">Firebase / Firestore</code></p>
     </div>
   </div>
 </footer>
 </div>
+
 </main>
 <div class="modal-overlay" id="loginModal" onclick="closeModalOutside(event)">
   <div class="modal">
@@ -2894,13 +2935,13 @@ footer::before, footer::after { display: none; }
     </div>
     <div id="registerForm" style="display:none">
       <div class="form-row">
-        <div class="form-group" style="margin-bottom:0"><label>First Name</label><input type="text" placeholder="Arjun"></div>
-        <div class="form-group" style="margin-bottom:0"><label>Last Name</label><input type="text" placeholder="Kumar"></div>
+        <div class="form-group" style="margin-bottom:0"><label>First Name</label><input id="r-first" type="text" placeholder="Arjun"></div>
+        <div class="form-group" style="margin-bottom:0"><label>Last Name</label><input id="r-last" type="text" placeholder="Kumar"></div>
       </div>
-      <div class="form-group" style="margin-top:1rem"><label>Email</label><input type="email" placeholder="you@email.com"></div>
-      <div class="form-group"><label>Phone</label><input type="tel" placeholder="+91 XXXXX XXXXX"></div>
-      <div class="form-group"><label>Password</label><input type="password" placeholder="Create a password"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:0.8rem;margin-top:0.5rem" onclick="login()"><i class="fa-solid fa-user-plus"></i> Create Account</button>
+      <div class="form-group" style="margin-top:1rem"><label>Email</label><input id="r-email" type="email" placeholder="you@email.com"></div>
+      <div class="form-group"><label>Phone</label><input id="r-phone" type="tel" placeholder="+91 XXXXX XXXXX"></div>
+      <div class="form-group"><label>Password</label><input id="r-pass" type="password" placeholder="Create a password"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:0.8rem;margin-top:0.5rem" onclick="register()"><i class="fa-solid fa-user-plus"></i> Create Account</button>
     </div>
   </div>
 </div>
@@ -2908,161 +2949,319 @@ footer::before, footer::after { display: none; }
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   CIVICPULSE — BACKEND API INTEGRATION
-   Backend: http://localhost:5000/api
-   Toggle API_ENABLED to switch between mock/live data
+   CIVICPULSE — FIREBASE INTEGRATION (Auth + Firestore)
+   Replaces the Node/Express backend entirely.
 ═══════════════════════════════════════════════════════ */
-const API_BASE = 'http://localhost:5000/api';
-let API_ENABLED = false; // set true when backend is running
-let authToken = localStorage.getItem('cp_token') || null;
-let currentUser = JSON.parse(localStorage.getItem('cp_user') || 'null');
+let API_ENABLED = true;   // Firebase is always "live"
+let authToken    = null;  // not used with Firebase, kept for compatibility
+let currentUser  = JSON.parse(localStorage.getItem('cp_user') || 'null');
+let fbReady = false;
 
-/* ── API helper ── */
-async function apiCall(endpoint, options = {}) {
-  if (!API_ENABLED) return null;
+window.addEventListener('firebase-ready', () => {
+  fbReady = true;
+  const { auth, onAuthStateChanged } = window.fb;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      // Pull extra profile fields (role, blood_group) from Firestore
+      const profile = await fsGetUserProfile(user.uid);
+      currentUser = {
+        uid: user.uid,
+        name: user.displayName || profile?.name || 'Citizen',
+        email: user.email,
+        role: profile?.role || 'citizen',
+        blood_group: profile?.blood_group || null
+      };
+      loggedIn = true;
+      localStorage.setItem('cp_user', JSON.stringify(currentUser));
+
+      const adminLink = document.getElementById('adminNavLink');
+      if (adminLink && currentUser.role === 'admin') {
+        adminLink.style.cssText = 'display:inline-flex;align-items:center;gap:0.4rem;color:#ffd700;font-weight:600;padding:0.45rem 0.9rem;border-radius:8px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);text-decoration:none';
+      }
+      const adb = document.getElementById('adminDashBtn');
+      if (adb && currentUser.role === 'admin') adb.style.display = 'inline-flex';
+
+      // If the user is already on the dashboard page when auth resolves, refresh it now
+      const dashPage = document.getElementById('page-dashboard');
+      if (dashPage && dashPage.classList.contains('active')) {
+        loadDashboard();
+      }
+    } else {
+      loggedIn = false;
+      currentUser = null;
+      localStorage.removeItem('cp_user');
+    }
+  });
+});
+
+/* ── Firestore: get extended user profile (role, blood_group) ── */
+async function fsGetUserProfile(uid) {
+  if (!fbReady) return null;
   try {
-    const headers = { 'Content-Type': 'application/json', ...options.headers };
-    if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
-    const res = await fetch(API_BASE + endpoint, { ...options, headers });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'API Error');
-    return data;
+    const { db, doc, getDoc } = window.fb;
+    const snap = await getDoc(doc(db, 'users', uid));
+    return snap.exists() ? snap.data() : null;
+  } catch (e) { console.warn('fsGetUserProfile failed', e); return null; }
+}
+
+/* ── AUTH: Register ── */
+async function registerWithAPI(name, email, phone, password, blood_group) {
+  if (!fbReady) { showToast('Loading…', 'Firebase still starting up, try again.', 'info'); return null; }
+  try {
+    const { auth, createUserWithEmailAndPassword, updateProfile, db, doc, setDoc, serverTimestamp } = window.fb;
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(cred.user, { displayName: name });
+    await setDoc(doc(db, 'users', cred.user.uid), {
+      name, email, phone: phone || '', blood_group: blood_group || '',
+      role: 'citizen', created_at: serverTimestamp()
+    });
+    return { id: cred.user.uid, name, email };
   } catch (e) {
-    console.warn('API call failed:', e.message);
+    showToast('Registration Failed', fbErrorMsg(e), 'error');
     return null;
   }
 }
 
-/* ── Auth: real login via API ── */
+/* ── AUTH: Login ── */
 async function loginWithAPI(email, password) {
-  const data = await apiCall('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password })
-  });
-  if (data) {
-    authToken = data.token;
-    currentUser = data.user;
-    localStorage.setItem('cp_token', authToken);
+  if (!fbReady) { showToast('Loading…', 'Firebase still starting up, try again.', 'info'); return false; }
+  try {
+    const { auth, signInWithEmailAndPassword } = window.fb;
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const profile = await fsGetUserProfile(cred.user.uid);
+    currentUser = {
+      uid: cred.user.uid,
+      name: cred.user.displayName || profile?.name || 'Citizen',
+      email: cred.user.email,
+      role: profile?.role || 'citizen',
+      blood_group: profile?.blood_group || null
+    };
     localStorage.setItem('cp_user', JSON.stringify(currentUser));
     return true;
+  } catch (e) {
+    showToast('Login Failed', fbErrorMsg(e), 'error');
+    return false;
   }
-  return false;
 }
 
-/* ── Auth: real register ── */
-async function registerWithAPI(name, email, phone, password, blood_group) {
-  return await apiCall('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify({ name, email, phone, password, blood_group })
-  });
-}
-
-/* ── Issues: submit to backend ── */
-async function submitIssueToAPI(formData) {
-  if (!API_ENABLED) return null;
-  try {
-    const headers = {};
-    if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
-    const res = await fetch(API_BASE + '/issues', { method:'POST', headers, body: formData });
-    return await res.json();
-  } catch(e) { return null; }
-}
-
-/* ── Blood donors: load from backend ── */
-async function loadDonorsFromAPI(bloodGroup) {
-  const url = bloodGroup && bloodGroup !== 'all' ? `/donors?blood_group=${encodeURIComponent(bloodGroup)}` : '/donors';
-  return await apiCall(url);
-}
-
-/* ── Volunteers: submit to backend ── */
-async function submitVolunteerToAPI(data) {
-  return await apiCall('/volunteers', { method:'POST', body: JSON.stringify(data) });
-}
-
-/* ── Dashboard: load real stats ── */
-async function loadDashboard() {
-  const data = await apiCall('/dashboard');
-  if (!data) return;
-  const s = data.stats;
-  document.querySelectorAll('.dm-num').forEach((el, i) => {
-    const vals = [s.issues_reported, s.issues_resolved, s.volunteer_hours, currentUser?.blood_group || 'N/A'];
-    if (vals[i] !== undefined) el.textContent = vals[i];
-  });
-}
-
-/* ── Community stats: load from backend ── */
-async function loadCommunityStats() {
-  const data = await apiCall('/stats');
-  if (!data) return;
-  // Update stat numbers if elements exist
+function fbErrorMsg(e) {
   const map = {
-    'issues_resolved': data.issues_resolved,
-    'blood_donors':    data.blood_donors,
-    'volunteers':      data.volunteers,
+    'auth/email-already-in-use': 'This email is already registered.',
+    'auth/invalid-email': 'Please enter a valid email.',
+    'auth/weak-password': 'Password must be at least 6 characters.',
+    'auth/user-not-found': 'No account found with this email.',
+    'auth/wrong-password': 'Incorrect password.',
+    'auth/invalid-credential': 'Invalid email or password.',
+    'auth/too-many-requests': 'Too many attempts. Try again later.'
+  };
+  return map[e.code] || e.message || 'Something went wrong.';
+}
+
+/* ── FIRESTORE: generic collection helpers ── */
+async function fsAdd(collectionName, data) {
+  if (!fbReady) return null;
+  try {
+    const { db, collection, addDoc, serverTimestamp } = window.fb;
+    const ref = await addDoc(collection(db, collectionName), { ...data, created_at: serverTimestamp() });
+    return { id: ref.id };
+  } catch (e) { console.error('fsAdd failed', e); return null; }
+}
+
+async function fsGetAll(collectionName, opts = {}) {
+  if (!fbReady) return [];
+  try {
+    const { db, collection, getDocs, query, where, orderBy: fsOrderBy, limit: fsLimit } = window.fb;
+    let qRef = collection(db, collectionName);
+    const constraints = [];
+    if (opts.where) opts.where.forEach(w => constraints.push(where(w[0], w[1], w[2])));
+    if (opts.orderBy) constraints.push(fsOrderBy(opts.orderBy, opts.orderDir || 'desc'));
+    if (opts.limit) constraints.push(fsLimit(opts.limit));
+    if (constraints.length) qRef = query(qRef, ...constraints);
+    const snap = await getDocs(qRef);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) { console.error('fsGetAll failed for ' + collectionName, e); return []; }
+}
+
+async function fsUpdate(collectionName, id, data) {
+  if (!fbReady) return null;
+  try {
+    const { db, doc, updateDoc } = window.fb;
+    await updateDoc(doc(db, collectionName, id), data);
+    return { ok: true };
+  } catch (e) { console.error('fsUpdate failed', e); return null; }
+}
+
+/* ── Issues ── */
+async function submitIssueToAPI(formData) {
+  const payload = {};
+  for (const [k, v] of formData.entries()) { if (k !== 'photo') payload[k] = v; }
+  payload.status = 'pending';
+  payload.ticket_no = 'CP' + Date.now().toString().slice(-6);
+  payload.user_id = currentUser?.uid || null;
+  const result = await fsAdd('issues', payload);
+  return result ? { ...result, ticket_no: payload.ticket_no } : null;
+}
+
+async function loadIssues(filters = {}) {
+  const opts = { orderBy: 'created_at' };
+  if (filters.status) opts.where = [['status', '==', filters.status]];
+  return await fsGetAll('issues', opts);
+}
+
+async function updateIssueStatusFB(id, status) {
+  return await fsUpdate('issues', id, { status });
+}
+
+/* ── Blood Donors ── */
+async function loadDonorsFromAPI(bloodGroup) {
+  const opts = { orderBy: 'created_at' };
+  if (bloodGroup && bloodGroup !== 'all') opts.where = [['blood_group', '==', bloodGroup]];
+  return await fsGetAll('donors', opts);
+}
+
+async function submitVolunteerToAPI(data) {
+  return await fsAdd('volunteers', data);
+}
+
+/* Donor registration */
+async function registerDonorFB(data) {
+  return await fsAdd('donors', { ...data, available: true });
+}
+
+/* ── Schemes ── */
+async function loadSchemesFB() {
+  return await fsGetAll('schemes', { orderBy: 'created_at' });
+}
+
+/* ── Hospitals ── */
+async function loadHospitalsFB() {
+  return await fsGetAll('hospitals');
+}
+
+/* ── Contact ── */
+async function submitContactToAPI(name, email, subject, message) {
+  return await fsAdd('contacts', { name, email, subject, message, replied: false });
+}
+
+/* ── Dashboard (per-user) ── */
+async function loadDashboard() {
+  const uname = document.getElementById('dash-username');
+  if (uname && currentUser) uname.textContent = currentUser.name || 'Citizen';
+
+  const actEl = document.getElementById('dash-activity-items');
+
+  // Wait for Firebase SDK to finish loading (max ~5s), instead of bailing instantly
+  if (!fbReady) {
+    let waited = 0;
+    while (!fbReady && waited < 5000) {
+      await new Promise(r => setTimeout(r, 200));
+      waited += 200;
+    }
+  }
+
+  if (!fbReady) {
+    if (actEl) actEl.innerHTML = '<p style="text-align:center;padding:1rem;color:var(--text3);font-size:0.85rem">Could not connect to the server. Please refresh the page.</p>';
+    setDashEl('dm-issues', '0'); setDashEl('dm-resolved', '0'); setDashEl('dm-hours', '0'); setDashEl('dm-blood', 'N/A');
+    return;
+  }
+
+  // Wait briefly for onAuthStateChanged to populate currentUser (covers the moment right after login/page-load)
+  if (!currentUser) {
+    let waited = 0;
+    while (!currentUser && waited < 3000) {
+      await new Promise(r => setTimeout(r, 200));
+      waited += 200;
+    }
+  }
+
+  if (uname && currentUser) uname.textContent = currentUser.name || 'Citizen';
+
+  if (!currentUser) {
+    if (actEl) actEl.innerHTML = '<p style="text-align:center;padding:1rem;color:var(--text3);font-size:0.85rem">Please log in to see your activity.</p>';
+    setDashEl('dm-issues', '0'); setDashEl('dm-resolved', '0'); setDashEl('dm-hours', '0'); setDashEl('dm-blood', 'N/A');
+    return;
+  }
+
+  try {
+    const myIssues = await fsGetAll('issues', { where: [['user_id', '==', currentUser.uid]], orderBy: 'created_at' });
+    const issuesArr = myIssues || [];
+    const resolved = issuesArr.filter(i => i.status === 'resolved').length;
+
+    setDashEl('dm-issues',   issuesArr.length);
+    setDashEl('dm-resolved', resolved);
+    setDashEl('dm-hours',    '0');
+    setDashEl('dm-blood',    currentUser.blood_group || 'N/A');
+    renderDashActivity(issuesArr.slice(0, 5));
+  } catch (e) {
+    console.error('loadDashboard failed', e);
+    if (actEl) actEl.innerHTML = '<p style="text-align:center;padding:1rem;color:var(--text3);font-size:0.85rem">Could not load your activity. Please try again.</p>';
+  }
+}
+
+function setDashEl(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val ?? '0';
+}
+
+function renderDashActivity(issues) {
+  const actEl = document.getElementById('dash-activity-items');
+  if (!actEl) return;
+  if (!issues.length) {
+    actEl.innerHTML = '<p style="text-align:center;padding:1rem;color:var(--text3);font-size:0.85rem">No activity yet. Report your first issue!</p>';
+    return;
+  }
+  const statusColors = { resolved:'var(--green)', in_progress:'var(--accent)', pending:'var(--amber)', rejected:'var(--red)' };
+  actEl.innerHTML = issues.map(i => `
+    <div style="display:flex;gap:0.8rem;align-items:flex-start;padding:0.7rem 0;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <div style="width:8px;height:8px;border-radius:50%;background:${statusColors[i.status]||'var(--text3)'};flex-shrink:0;margin-top:6px"></div>
+      <div>
+        <strong style="font-size:0.87rem">${i.category ? i.category.charAt(0).toUpperCase()+i.category.slice(1) : 'Issue'} — ${i.location || ''}</strong><br>
+        <span style="font-size:0.77rem;color:var(--text3)">
+          Ticket: ${i.ticket_no || '—'} &nbsp;·&nbsp;
+          <span style="color:${statusColors[i.status]||'var(--text3)'}">${(i.status||'').replace('_',' ')}</span>
+        </span>
+      </div>
+    </div>`).join('');
+}
+
+async function loadDashboardData() { await loadDashboard(); }
+
+/* ── Community stats (computed from Firestore counts) ── */
+async function loadCommunityStats() {
+  if (!fbReady) return null;
+  const [issues, donors, volunteers, hospitals, schemes] = await Promise.all([
+    fsGetAll('issues'), fsGetAll('donors'), fsGetAll('volunteers'),
+    fsGetAll('hospitals'), fsGetAll('schemes')
+  ]);
+  return {
+    issues_reported: issues.length,
+    issues_resolved: issues.filter(i => i.status === 'resolved').length,
+    blood_donors: donors.length,
+    volunteers: volunteers.length,
+    hospitals: hospitals.length,
+    users: 0 // would require admin SDK / Cloud Function to count auth users
   };
 }
 
-/* ── Contact: submit to backend ── */
-async function submitContactToAPI(name, email, subject, message) {
-  return await apiCall('/contact', {
-    method: 'POST',
-    body: JSON.stringify({ name, email, subject, message })
-  });
-}
-
-/* ── Notifications: load from backend ── */
-async function loadNotifications() {
-  if (!authToken) return;
-  const data = await apiCall('/notifications');
-  if (data && data.length) {
-    const unread = data.filter(n => !n.read).length;
-    if (unread > 0) {
-      showToast('Notifications', `You have ${unread} unread notification${unread>1?'s':''}.`, 'info');
-    }
-  }
-}
-
-/* ── Check if already logged in from storage ── */
-if (authToken && currentUser) {
-  loggedIn = true;
-}
-
-/* ── Override login to use API if enabled ── */
-const _originalLogin = login;
-login = async function() {
-  const emailEl = document.getElementById('m-email');
-  const passEl  = document.getElementById('m-pass');
-  if (API_ENABLED && emailEl && passEl && emailEl.value && passEl.value) {
-    const ok = await loginWithAPI(emailEl.value, passEl.value);
-    if (ok) {
-      loggedIn = true;
-      closeModal();
-      navigate('page-dashboard');
-      loadDashboard();
-      loadNotifications();
-      showToast('Welcome back!', 'Dashboard is now active.', 'success');
-      return;
-    } else {
-      showToast('Login Failed', 'Invalid email or password.', 'error');
-      return;
-    }
-  }
-  _originalLogin();
-};
+/* ── Notifications (admin only, simplified) ── */
+async function loadNotifications() { /* handled via Firestore 'notifications' collection if needed */ }
 
 /* ── Override logout ── */
 const _originalLogout = logout;
 logout = function() {
-  authToken = null; currentUser = null;
-  localStorage.removeItem('cp_token');
+  if (fbReady) { window.fb.signOut(window.fb.auth).catch(()=>{}); }
+  authToken = null; currentUser = null; loggedIn = false;
   localStorage.removeItem('cp_user');
-  _originalLogout();
+  const adminLink = document.getElementById('adminNavLink');
+  if (adminLink) adminLink.style.display = 'none';
+  navigate('page-home');
+  showToast('Signed out', 'See you soon!', 'info');
 };
 
-/* ── Override submitReport to use API ── */
+/* ── Override submitReport to use Firestore ── */
 const _originalSubmitReport = submitReport;
 submitReport = async function() {
-  if (!API_ENABLED) { _originalSubmitReport(); return; }
   const loc  = document.getElementById('issue-location')?.value;
   const desc = document.getElementById('issue-desc')?.value;
   const name = document.getElementById('issue-name')?.value;
@@ -3078,13 +3277,14 @@ submitReport = async function() {
     showToast('Report Submitted!', 'Ticket #' + data.ticket_no + ' created.', 'success');
     document.getElementById('issue-location').value = '';
     document.getElementById('issue-desc').value = '';
+  } else {
+    showToast('Error', 'Could not submit. Please try again.', 'error');
   }
 };
 
-/* ── Override registerVolunteer to use API ── */
+/* ── Override registerVolunteer to use Firestore ── */
 const _originalRegVol = registerVolunteer;
 registerVolunteer = async function() {
-  if (!API_ENABLED) { _originalRegVol(); return; }
   const name  = document.getElementById('vol-name')?.value;
   const email = document.getElementById('vol-email')?.value;
   const age   = document.getElementById('vol-age')?.value;
@@ -3092,40 +3292,41 @@ registerVolunteer = async function() {
   const area  = document.getElementById('vol-area')?.value;
   const avail = document.getElementById('vol-avail')?.value;
   if (!name || !email || !phone || !area) { showToast('Missing Fields','Please fill all fields.','error'); return; }
-  const data = await submitVolunteerToAPI({ name, email, age, phone, area, availability: avail });
+  const data = await submitVolunteerToAPI({ name, email, age, phone, area, availability: avail, status: 'active', hours_logged: 0 });
   if (data?.id) {
     showToast('Registration Successful!', `Welcome ${name}!`, 'success');
+  } else {
+    showToast('Error', 'Could not register. Please try again.', 'error');
   }
 };
 
-/* ── Load live donors from API if available ── */
+/* ── Load live donors from Firestore ── */
 const _originalRenderDonors = renderDonors;
 renderDonors = async function(filter) {
-  if (API_ENABLED) {
-    const data = await loadDonorsFromAPI(filter);
-    if (data && data.length) {
-      const grid = document.getElementById('donorsGrid');
-      if (!grid) return;
-      grid.innerHTML = data.map(d => `
-        <div class="donor-card">
-          <div class="blood-badge">${d.blood_group}</div>
-          <div class="donor-info">
-            <h4>${d.name}</h4>
-            <p><span class="donor-available"></span>${d.city}</p>
-            <p style="margin-top:2px;font-size:0.73rem;color:var(--text3)">Last donated ${d.last_donated||'Recently'}</p>
-            <button class="btn btn-ghost btn-sm" style="margin-top:0.5rem;font-size:0.75rem"
-              onclick="showToast('Contact','Connecting with ${d.name}…','info')">
-              <i class='fa-solid fa-phone'></i> Contact
-            </button>
-          </div>
-        </div>`).join('');
-      return;
-    }
+  const data = await loadDonorsFromAPI(filter);
+  const grid = document.getElementById('donorsGrid');
+  if (!grid) return;
+  if (data && data.length) {
+    grid.innerHTML = data.map(d => `
+      <div class="donor-card">
+        <div class="blood-badge">${d.blood_group}</div>
+        <div class="donor-info">
+          <h4>${d.name}</h4>
+          <p><span class="donor-available"></span>${d.city}</p>
+          <p style="margin-top:2px;font-size:0.73rem;color:var(--text3)">Last donated ${d.last_donated||'Recently'}</p>
+          <button class="btn btn-ghost btn-sm" style="margin-top:0.5rem;font-size:0.75rem"
+            onclick="showToast('Contact','Connecting with ${d.name}…','info')">
+            <i class='fa-solid fa-phone'></i> Contact
+          </button>
+        </div>
+      </div>`).join('');
+  } else {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text2)">
+      <i class="fa-solid fa-droplet" style="font-size:2.5rem;margin-bottom:1rem;display:block;opacity:0.4"></i>
+      <p>No donors registered yet. Be the first!</p>
+    </div>`;
   }
-  _originalRenderDonors(filter);
 };
-
-
 
 const donors=[];
 const botAnswers={
@@ -3140,7 +3341,7 @@ const botAnswers={
   'login':'🔐 Click the Login button in the top right corner to sign in or create an account.',
   'admin':'⚙️ Admin access is restricted. Please login with admin credentials to access the admin panel.',
 };
-const defaultReplies=['Please connect the backend at localhost:5000 for full AI responses.','Try asking about emergency numbers, blood donation, or how to report an issue.','For urgent help call 108 (Ambulance), 100 (Police), or 101 (Fire).'];
+const defaultReplies=['Try asking about emergency numbers, blood donation, or how to report an issue.','For urgent help call 108 (Ambulance), 100 (Police), or 101 (Fire).','I can help with reporting issues, finding blood donors, or volunteering!'];
 let loggedIn=false,currentTheme='dark';
 
 function navigate(pageId){
@@ -3281,8 +3482,8 @@ async function loadAdminTab(tab) {
     return;
   }
 
-  const endpoint = tab === 'contacts' ? '/contact' : '/' + tab;
-  const data = await apiCall(endpoint);
+  const collMap = { issues:'issues', donors:'donors', volunteers:'volunteers', users:'users', contacts:'contacts', hospitals:'hospitals', schemes:'schemes' };
+  const data = await fsGetAll(collMap[tab] || tab, { orderBy: 'created_at' });
 
   if (!data || data.error || (Array.isArray(data) && data.length === 0)) {
     showEmptyAdmin(data && data.error ? data.error : 'No records found for ' + tab + '.');
@@ -3364,7 +3565,7 @@ function showEmptyAdmin(msg) {
   const tableScroll = document.getElementById('adminTableScroll');
   if (emptyState) {
     emptyState.style.display = 'flex';
-    emptyState.innerHTML = `<i class="fa-solid fa-database" style="font-size:2.5rem;opacity:0.4"></i><p>${msg}</p><small>API: localhost:5000/api</small>`;
+    emptyState.innerHTML = `<i class="fa-solid fa-database" style="font-size:2.5rem;opacity:0.4"></i><p>${msg}</p><small>Connected to Firebase Firestore</small>`;
   }
   if (tableScroll) tableScroll.style.display = 'none';
   updateRecordCount(0);
@@ -3395,7 +3596,7 @@ function adminStatusFilterFn(val) {
 /* ── Issue status update ── */
 async function updateIssueStatus(id, status) {
   if (!status) return;
-  const data = await apiCall('/issues/'+id+'/status', { method:'PATCH', body:JSON.stringify({status}) });
+  const data = await updateIssueStatusFB(String(id), status);
   if (data) {
     showToast('Status Updated', 'Issue #'+id+' → '+status, 'success');
     loadAdminTab('issues');
@@ -3412,7 +3613,7 @@ async function toggleDonorAvailability(id, current) {
 /* ── Load admin stats ── */
 async function loadAdminStats() {
   if (!API_ENABLED) return;
-  const data = await apiCall('/stats');
+  const data = await loadCommunityStats();
   if (!data) return;
   const map = {
     'as-users':      data.users,
@@ -3426,7 +3627,7 @@ async function loadAdminStats() {
     if (el && val !== undefined) el.textContent = val.toLocaleString();
   });
   // contacts count
-  const contacts = await apiCall('/contacts');
+  const contacts = await fsGetAll('contacts');
   const cc = document.getElementById('as-contacts');
   if (cc && Array.isArray(contacts)) cc.textContent = contacts.length;
 }
@@ -3525,8 +3726,8 @@ async function submitAdminForm() {
   });
   if (!valid) { showToast('Missing Fields','Please fill all required fields.','error'); return; }
   
-  const endpointMap = { donors:'/donors', volunteers:'/volunteers', schemes:'/schemes', hospitals:'/hospitals' };
-  const data = await apiCall(endpointMap[adminCurrentTab], { method:'POST', body:JSON.stringify(payload) });
+  const collMap = { donors:'donors', volunteers:'volunteers', schemes:'schemes', hospitals:'hospitals' };
+  const data = await fsAdd(collMap[adminCurrentTab], payload);
   if (data && data.id) {
     showToast('Added!','New record created successfully.','success');
     document.getElementById('adminFormModal').style.display = 'none';
@@ -3549,16 +3750,14 @@ let allSchemes = [];
 async function loadSchemes() {
   const grid = document.getElementById('schemesGrid');
   if (!grid) return;
-  
-  if (API_ENABLED) {
-    const data = await apiCall('/schemes');
-    if (data && data.length) {
-      allSchemes = data;
-      renderSchemes(data);
-      return;
-    }
+
+  const data = await loadSchemesFB();
+  if (data && data.length) {
+    allSchemes = data;
+    renderSchemes(data);
+    return;
   }
-  
+
   // Fallback: empty state with connect message
   grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text2)">
     <i class="fa-solid fa-building-columns" style="font-size:2.5rem;margin-bottom:1rem;display:block;opacity:0.4"></i>
@@ -3603,9 +3802,9 @@ function loadSchemesByCategory(cat) {
 async function loadHospitals() {
   const grid = document.getElementById('hospitalsGrid');
   if (!grid) return;
-  
-  if (API_ENABLED) {
-    const data = await apiCall('/hospitals');
+
+  const data = await loadHospitalsFB();
+  if (true) {
     if (data && data.length) {
       grid.innerHTML = data.map(h => `
         <div style="background:rgba(0,0,0,0.82);border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:1.1rem;display:flex;gap:0.9rem;align-items:flex-start;transition:all 0.25s"
@@ -3671,6 +3870,10 @@ navigate = function(pageId) {
 /* ── CLEAN AUTH OVERRIDES ── */
 /* ── Open Admin Dashboard ── */
 function openAdminDashboard() {
+  if (!loggedIn || !currentUser || currentUser.role !== 'admin') {
+    showToast('Access Denied', 'Admin access requires admin login.', 'error');
+    return;
+  }
   // Pass auth token to dashboard via sessionStorage
   try {
     if (authToken) sessionStorage.setItem('cp_dash_token', authToken);
@@ -3679,38 +3882,59 @@ function openAdminDashboard() {
   window.open('civicpulse-dashboard.html', '_blank');
 }
 
-const _baseLogin = login;
 login = async function() {
   const emailEl = document.getElementById('m-email');
   const passEl  = document.getElementById('m-pass');
 
-  if (API_ENABLED && emailEl && passEl && emailEl.value && passEl.value) {
-    const ok = await loginWithAPI(emailEl.value, passEl.value);
-    if (ok) {
-      loggedIn = true;
-      closeModal();
-      // Show admin nav if admin
-      const adminLink = document.getElementById('adminNavLink');
-      if (adminLink && currentUser && currentUser.role === 'admin') {
-        adminLink.style.cssText = 'display:inline-flex;align-items:center;gap:0.4rem;color:#ffd700;font-weight:600;padding:0.45rem 0.9rem;border-radius:8px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);transition:all 0.2s;text-decoration:none';
-      }
-      navigate('page-dashboard');
-      const adb = document.getElementById('adminDashBtn');
-      if (adb && currentUser && currentUser.role === 'admin') adb.style.display = 'inline-flex';
-      showToast('Welcome back, ' + (currentUser?.name || 'Citizen') + '!', 'Dashboard is now active.', 'success');
-      return;
-    } else {
-      showToast('Login Failed', 'Invalid email or password.', 'error');
-      return;
-    }
+  if (!emailEl || !passEl || !emailEl.value || !passEl.value) {
+    showToast('Missing Fields', 'Please enter your email and password.', 'error');
+    return;
   }
-  // Demo login (no backend)
-  loggedIn = true;
-  currentUser = { name: 'Demo User', role: 'citizen' };
-  closeModal();
-  navigate('page-dashboard');
-  showToast('Demo Login', 'Using demo mode (no backend).', 'info');
+
+  const ok = await loginWithAPI(emailEl.value, passEl.value);
+  if (ok) {
+    loggedIn = true;
+    closeModal();
+    const adminLink = document.getElementById('adminNavLink');
+    if (adminLink && currentUser && currentUser.role === 'admin') {
+      adminLink.style.cssText = 'display:inline-flex;align-items:center;gap:0.4rem;color:#ffd700;font-weight:600;padding:0.45rem 0.9rem;border-radius:8px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);transition:all 0.2s;text-decoration:none';
+    }
+    const adb = document.getElementById('adminDashBtn');
+    if (adb && currentUser && currentUser.role === 'admin') adb.style.display = 'inline-flex';
+    navigate('page-dashboard');
+    showToast('Welcome back, ' + (currentUser?.name || 'Citizen') + '!', 'Dashboard is now active.', 'success');
+  }
+  // On failure, loginWithAPI() already shows its own error toast — nothing further to do.
 };
+
+/* ── Register (Create Account tab) ── */
+async function register() {
+  const first = document.getElementById('r-first')?.value.trim();
+  const last  = document.getElementById('r-last')?.value.trim();
+  const email = document.getElementById('r-email')?.value.trim();
+  const phone = document.getElementById('r-phone')?.value.trim();
+  const pass  = document.getElementById('r-pass')?.value;
+
+  if (!first || !email || !pass) {
+    showToast('Missing Fields', 'Please fill in name, email and password.', 'error');
+    return;
+  }
+  if (pass.length < 6) {
+    showToast('Weak Password', 'Password must be at least 6 characters.', 'error');
+    return;
+  }
+
+  const fullName = last ? (first + ' ' + last) : first;
+  const result = await registerWithAPI(fullName, email, phone, pass, '');
+
+  if (result) {
+    loggedIn = true;
+    closeModal();
+    navigate('page-dashboard');
+    showToast('Welcome, ' + fullName + '!', 'Your account has been created.', 'success');
+  }
+  // On failure, registerWithAPI() already shows its own error toast.
+}
 
 const _baseLogout = logout;
 logout = function() {
@@ -3801,6 +4025,50 @@ window.onload = function() {
     }
   }
 };
+
+
+
+
+
+/* ── Home page community stats (from Firestore) ── */
+async function loadHomeStats() {
+  if (!fbReady) return;
+  const stats = await loadCommunityStats();
+  if (!stats) return;
+  const map = {
+    'stat-issues':     stats.issues_resolved,
+    'stat-volunteers': stats.volunteers,
+    'stat-donors':     stats.blood_donors,
+    'stat-hospitals':  stats.hospitals,
+    'stat-users':      stats.users
+  };
+  Object.entries(map).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined) el.textContent = val.toLocaleString();
+  });
+}
+
+/* ── Contact form submit handler ── */
+async function handleContactSubmit() {
+  const name    = document.getElementById('contact-name')?.value.trim();
+  const email   = document.getElementById('contact-email')?.value.trim();
+  const subject = document.getElementById('contact-subject')?.value.trim();
+  const message = document.getElementById('contact-message')?.value.trim();
+  if (!name || !email || !subject || !message) {
+    showToast('Missing Fields', 'Please fill in all fields.', 'error');
+    return;
+  }
+  const result = await submitContactToAPI(name, email, subject, message);
+  if (result?.id) {
+    showToast('Message Sent!', 'We will get back to you within 24 hours.', 'success');
+    document.getElementById('contact-name').value = '';
+    document.getElementById('contact-email').value = '';
+    document.getElementById('contact-subject').value = '';
+    document.getElementById('contact-message').value = '';
+  } else {
+    showToast('Error', 'Could not send message. Please try again.', 'error');
+  }
+}
 
 </script>
 

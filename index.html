@@ -1662,6 +1662,33 @@ footer::before, footer::after { display: none; }
   .admin-form-grid { grid-template-columns:1fr; }
 }
 
+
+/* ── Issue Category Buttons ── */
+.issue-cat-btn {
+  padding: 0.55rem 0.5rem;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text2);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+}
+.issue-cat-btn:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+.issue-cat-btn.active {
+  background: rgba(0,180,255,0.12);
+  border-color: rgba(0,180,255,0.35);
+  color: var(--accent);
+  font-weight: 600;
+}
+
 </style>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -2095,23 +2122,62 @@ footer::before, footer::after { display: none; }
 
 <section style="padding:5rem 2rem">
   <div class="container">
-    <div class="sec-label">Blood Donor Finder</div>
-    <h2 class="sec-title">Find <span class="acc">Blood Donors</span> Near You</h2>
-    <p class="sec-sub">Verified blood donors available across your city. Filter by blood group and contact directly.</p>
-    <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:2rem">
-      <button class="filter-btn active" onclick="filterBlood('all',this)">All</button>
-      <button class="filter-btn" onclick="filterBlood('A+',this)">A+</button>
-      <button class="filter-btn" onclick="filterBlood('A-',this)">A−</button>
-      <button class="filter-btn" onclick="filterBlood('B+',this)">B+</button>
-      <button class="filter-btn" onclick="filterBlood('B-',this)">B−</button>
-      <button class="filter-btn" onclick="filterBlood('O+',this)">O+</button>
-      <button class="filter-btn" onclick="filterBlood('O-',this)">O−</button>
-      <button class="filter-btn" onclick="filterBlood('AB+',this)">AB+</button>
-      <button class="filter-btn" onclick="filterBlood('AB-',this)">AB−</button>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem" id="donorsGrid"></div>
-    <div style="text-align:center;margin-top:1.5rem">
-      <button class="btn btn-ghost" onclick="openModal();showToast('Register as Blood Donor','Fill the form to become a verified donor.','success')"><i class="fa-solid fa-plus"></i> Register as Donor</button>
+    <div class="sec-label">Blood Donor Network</div>
+    <h2 class="sec-title">Find or <span class="acc">Become a Donor</span></h2>
+    <p class="sec-sub">Search for available blood donors near you, or register yourself to save a life.</p>
+
+    <!-- ── Two column layout: Register form + Donor search ── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:2.5rem;align-items:start">
+
+      <!-- Register as Donor -->
+      <div style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:2rem">
+        <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:1.5rem">
+          <div style="width:40px;height:40px;border-radius:10px;background:rgba(220,38,38,0.15);display:flex;align-items:center;justify-content:center;color:#ef4444;font-size:1.1rem"><i class="fa-solid fa-droplet"></i></div>
+          <div>
+            <div style="font-family:var(--font-head);font-size:1rem;font-weight:700">Register as Donor</div>
+            <div style="font-size:0.75rem;color:var(--text2)">Your details stay private and secure</div>
+          </div>
+        </div>
+        <div class="form-group"><label>Full Name *</label><input type="text" id="donor-name" placeholder="Mohammed Irfan"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem">
+          <div class="form-group"><label>Blood Group *</label>
+            <select id="donor-bg" style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.15);border-radius:9px;padding:0.6rem 0.8rem;color:var(--text);font-family:var(--font-body);width:100%;outline:none">
+              <option value="">Select…</option>
+              <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+              <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Age</label><input type="number" id="donor-age" placeholder="25" min="18" max="65"></div>
+        </div>
+        <div class="form-group"><label>Phone Number *</label><input type="tel" id="donor-phone" placeholder="+91 XXXXX XXXXX"></div>
+        <div class="form-group"><label>City / Area *</label><input type="text" id="donor-city" placeholder="Cuddalore, Tamil Nadu"></div>
+        <div class="form-group"><label>Last Donation Date (if any)</label><input type="date" id="donor-last"></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:0.8rem;margin-top:0.3rem" onclick="submitDonorRegistration()">
+          <i class="fa-solid fa-heart"></i> Register as Blood Donor
+        </button>
+        <div id="donor-form-status" style="display:none;margin-top:0.8rem;padding:0.7rem;border-radius:9px;font-size:0.82rem;text-align:center"></div>
+      </div>
+
+      <!-- Find Donor -->
+      <div>
+        <div style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:1.5rem;margin-bottom:1.2rem">
+          <div style="font-family:var(--font-head);font-size:0.95rem;font-weight:700;margin-bottom:1rem"><i class="fa-solid fa-magnifying-glass" style="color:var(--accent);margin-right:0.4rem"></i>Search Donors</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-bottom:0.8rem">
+            <select id="filter-bg" onchange="renderDonors(this.value)" style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.15);border-radius:9px;padding:0.6rem 0.8rem;color:var(--text);font-family:var(--font-body);outline:none">
+              <option value="all">All Blood Groups</option>
+              <option value="A+">A+</option><option value="A-">A-</option>
+              <option value="B+">B+</option><option value="B-">B-</option>
+              <option value="O+">O+</option><option value="O-">O-</option>
+              <option value="AB+">AB+</option><option value="AB-">AB-</option>
+            </select>
+            <input type="text" id="filter-city" placeholder="Filter by city…" oninput="renderDonors(document.getElementById('filter-bg').value)"
+              style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.15);border-radius:9px;padding:0.6rem 0.8rem;color:var(--text);font-family:var(--font-body);outline:none">
+          </div>
+        </div>
+        <div id="donorsGrid" style="display:flex;flex-direction:column;gap:0.7rem;max-height:460px;overflow-y:auto;padding-right:0.3rem">
+          <div style="text-align:center;padding:2rem;color:var(--text2)"><i class="fa-solid fa-spinner fa-spin"></i> Loading donors…</div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -2186,35 +2252,88 @@ footer::before, footer::after { display: none; }
 
 <section style="padding:5rem 2rem">
   <div class="container">
-    <div class="sec-label">Report an Issue</div>
-    <h2 class="sec-title">Public <span class="acc">Issue Reporting</span></h2>
-    <p class="sec-sub">Report civic problems in your area. Every complaint is tracked and resolved.</p>
-    <div class="report-form fade-in" style="max-width:700px">
-      <div class="form-group">
-        <label>Issue Category *</label>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.6rem;margin-bottom:1rem">
-          <div style="padding:0.7rem;border-radius:10px;border:1px solid rgba(0,180,255,0.4);background:rgba(0,180,255,0.08);text-align:center;cursor:pointer;font-size:0.8rem;color:var(--accent)" onclick="selectIssue(this)"><i class="fa-solid fa-trash" style="font-size:1.3rem;display:block;margin-bottom:0.3rem"></i>Garbage</div>
-          <div style="padding:0.7rem;border-radius:10px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.7);text-align:center;cursor:pointer;font-size:0.8rem;color:var(--text2)" onclick="selectIssue(this)"><i class="fa-solid fa-faucet-drip" style="font-size:1.3rem;display:block;margin-bottom:0.3rem"></i>Water Leak</div>
-          <div style="padding:0.7rem;border-radius:10px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.7);text-align:center;cursor:pointer;font-size:0.8rem;color:var(--text2)" onclick="selectIssue(this)"><i class="fa-solid fa-road" style="font-size:1.3rem;display:block;margin-bottom:0.3rem"></i>Road Damage</div>
-          <div style="padding:0.7rem;border-radius:10px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.7);text-align:center;cursor:pointer;font-size:0.8rem;color:var(--text2)" onclick="selectIssue(this)"><i class="fa-solid fa-lightbulb" style="font-size:1.3rem;display:block;margin-bottom:0.3rem"></i>Streetlight</div>
-          <div style="padding:0.7rem;border-radius:10px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.7);text-align:center;cursor:pointer;font-size:0.8rem;color:var(--text2)" onclick="selectIssue(this)"><i class="fa-solid fa-water" style="font-size:1.3rem;display:block;margin-bottom:0.3rem"></i>Sewer</div>
-          <div style="padding:0.7rem;border-radius:10px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.7);text-align:center;cursor:pointer;font-size:0.8rem;color:var(--text2)" onclick="selectIssue(this)"><i class="fa-solid fa-ellipsis" style="font-size:1.3rem;display:block;margin-bottom:0.3rem"></i>Other</div>
+    <div class="sec-label">Public Service</div>
+    <h2 class="sec-title">Report a <span class="acc">Civic Issue</span></h2>
+    <p class="sec-sub">Report road damage, garbage, water issues, streetlight faults and more. Get a tracking ticket instantly.</p>
+
+    <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:2rem;margin-top:2.5rem;align-items:start">
+
+      <!-- Issue Form -->
+      <div style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:2rem">
+        <div style="font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:0.4rem"><i class="fa-solid fa-flag" style="color:var(--amber);margin-right:0.4rem"></i>Issue Details</div>
+        <div style="font-size:0.77rem;color:var(--text2);margin-bottom:1.5rem">All fields marked * are required</div>
+
+        <!-- Category selector -->
+        <div style="margin-bottom:1.2rem">
+          <label style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem;display:block">Issue Category *</label>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem" id="issueCatGrid">
+            <button class="issue-cat-btn active" data-val="road" onclick="selectIssueCat(this)"><i class="fa-solid fa-road"></i> Road</button>
+            <button class="issue-cat-btn" data-val="garbage" onclick="selectIssueCat(this)"><i class="fa-solid fa-trash"></i> Garbage</button>
+            <button class="issue-cat-btn" data-val="water" onclick="selectIssueCat(this)"><i class="fa-solid fa-faucet-drip"></i> Water</button>
+            <button class="issue-cat-btn" data-val="streetlight" onclick="selectIssueCat(this)"><i class="fa-solid fa-lightbulb"></i> Streetlight</button>
+            <button class="issue-cat-btn" data-val="sewer" onclick="selectIssueCat(this)"><i class="fa-solid fa-water"></i> Sewer</button>
+            <button class="issue-cat-btn" data-val="other" onclick="selectIssueCat(this)"><i class="fa-solid fa-circle-dot"></i> Other</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem">
+          <div class="form-group"><label>Your Name *</label><input type="text" id="issue-name" placeholder="Full name"></div>
+          <div class="form-group"><label>Phone *</label><input type="tel" id="issue-phone" placeholder="+91 XXXXX XXXXX"></div>
+        </div>
+        <div class="form-group"><label>Location *</label><input type="text" id="issue-location" placeholder="Street name, Area, City"></div>
+        <div class="form-group"><label>Description *</label>
+          <textarea id="issue-desc" placeholder="Describe the issue in detail — how long it has existed, impact on residents, urgency…" rows="4"
+            style="resize:vertical;min-height:90px"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Photo (optional)</label>
+          <div id="issue-photo-drop" style="border:2px dashed rgba(255,255,255,0.15);border-radius:12px;padding:1.5rem;text-align:center;cursor:pointer;transition:border-color 0.2s"
+            onmouseover="this.style.borderColor='rgba(255,255,255,0.35)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'"
+            onclick="document.getElementById('issue-photo-input').click()">
+            <i class="fa-solid fa-camera" style="font-size:1.5rem;color:var(--text2);display:block;margin-bottom:0.4rem"></i>
+            <div style="font-size:0.8rem;color:var(--text2)">Click to upload photo</div>
+            <div style="font-size:0.72rem;color:var(--text3);margin-top:0.2rem">PNG, JPG up to 5 MB</div>
+          </div>
+          <input type="file" id="issue-photo-input" accept="image/*" style="display:none" onchange="previewIssuePhoto(this)">
+          <img id="issue-photo-preview" style="display:none;width:100%;border-radius:10px;margin-top:0.6rem;max-height:140px;object-fit:cover">
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:0.85rem" onclick="submitReport()">
+          <i class="fa-solid fa-paper-plane"></i> Submit Report
+        </button>
+        <div id="report-form-status" style="display:none;margin-top:0.8rem;padding:0.7rem;border-radius:9px;font-size:0.82rem;text-align:center"></div>
+      </div>
+
+      <!-- Info Panel -->
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:1.5rem">
+          <div style="font-family:var(--font-head);font-size:0.9rem;font-weight:700;margin-bottom:1rem"><i class="fa-solid fa-circle-info" style="color:var(--accent)"></i> How it works</div>
+          <div style="display:flex;flex-direction:column;gap:0.9rem">
+            <div style="display:flex;gap:0.8rem;align-items:flex-start">
+              <div style="width:24px;height:24px;border-radius:50%;background:rgba(0,180,255,0.15);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0">1</div>
+              <div style="font-size:0.83rem;color:var(--text2)">Fill in the issue details and submit the form</div>
+            </div>
+            <div style="display:flex;gap:0.8rem;align-items:flex-start">
+              <div style="width:24px;height:24px;border-radius:50%;background:rgba(0,180,255,0.15);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0">2</div>
+              <div style="font-size:0.83rem;color:var(--text2)">You get a unique ticket number instantly</div>
+            </div>
+            <div style="display:flex;gap:0.8rem;align-items:flex-start">
+              <div style="width:24px;height:24px;border-radius:50%;background:rgba(0,180,255,0.15);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0">3</div>
+              <div style="font-size:0.83rem;color:var(--text2)">Admin reviews and assigns the issue</div>
+            </div>
+            <div style="display:flex;gap:0.8rem;align-items:flex-start">
+              <div style="width:24px;height:24px;border-radius:50%;background:rgba(0,180,255,0.15);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0">4</div>
+              <div style="font-size:0.83rem;color:var(--text2)">Track status in your citizen dashboard</div>
+            </div>
+          </div>
+        </div>
+        <div style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:1.5rem">
+          <div style="font-family:var(--font-head);font-size:0.9rem;font-weight:700;margin-bottom:0.8rem"><i class="fa-solid fa-ticket" style="color:var(--amber)"></i> Track Your Issue</div>
+          <input type="text" id="track-ticket" placeholder="Enter ticket no. e.g. CP1234"
+            style="width:100%;background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.15);border-radius:9px;padding:0.6rem 0.8rem;color:var(--text);font-family:var(--font-body);outline:none;margin-bottom:0.7rem">
+          <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="trackIssue()"><i class="fa-solid fa-magnifying-glass"></i> Track Status</button>
+          <div id="track-result" style="display:none;margin-top:0.8rem;font-size:0.82rem;padding:0.7rem;border-radius:9px;background:rgba(0,180,255,0.08);border:1px solid rgba(0,180,255,0.2)"></div>
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group" style="margin-bottom:0"><label>Your Name *</label><input type="text" id="issue-name" placeholder="Full name"></div>
-        <div class="form-group" style="margin-bottom:0"><label>Phone Number *</label><input type="tel" id="issue-phone" placeholder="+91 XXXXX XXXXX"></div>
-      </div>
-      <div class="form-group" style="margin-top:1rem"><label>Location / Address *</label><input type="text" id="issue-location" placeholder="Street, Area, City"></div>
-      <div class="form-group"><label>Description *</label><textarea id="issue-desc" placeholder="Describe the issue in detail…"></textarea></div>
-      <div class="form-group">
-        <label>Upload Photo / Evidence</label>
-        <div style="border:2px dashed rgba(255,255,255,0.2);border-radius:12px;padding:2rem;text-align:center;cursor:pointer;color:var(--text2);font-size:0.87rem" onclick="showToast('Photo Upload','Camera/Gallery access ready.','info')">
-          <i class="fa-solid fa-camera" style="font-size:2rem;display:block;margin-bottom:0.5rem;color:var(--text3)"></i>
-          Tap to upload photo or drag & drop<br><span style="font-size:0.75rem;color:var(--text3)">PNG, JPG, MP4 up to 20MB</span>
-        </div>
-      </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:0.85rem" onclick="submitReport()"><i class="fa-solid fa-paper-plane"></i> Submit Report</button>
     </div>
   </div>
 </section>
@@ -2279,30 +2398,113 @@ footer::before, footer::after { display: none; }
 
 <section style="padding:5rem 2rem">
   <div class="container">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:start" class="fade-in">
-      <div>
-        <div class="sec-label">Volunteer Network</div>
-        <h2 class="sec-title">Join Our <span class="acc">Volunteer</span> Community</h2>
-        <p style="color:var(--text2);margin-bottom:1.5rem;font-size:0.95rem">Make a difference. Join thousands of volunteers helping with food distribution, medical camps, cleanups, and more.</p>
-        <div style="display:flex;gap:1rem;margin-bottom:1rem;align-items:flex-start"><div style="width:42px;height:42px;border-radius:10px;background:rgba(0,180,255,0.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0"><i class="fa-solid fa-hand-holding-heart"></i></div><div><strong>Flexible Commitment</strong><br><span style="font-size:0.83rem;color:var(--text2)">Choose your hours — weekends, evenings, or full-time</span></div></div>
-        <div style="display:flex;gap:1rem;margin-bottom:1rem;align-items:flex-start"><div style="width:42px;height:42px;border-radius:10px;background:rgba(0,180,255,0.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0"><i class="fa-solid fa-certificate"></i></div><div><strong>Verified Certificates</strong><br><span style="font-size:0.83rem;color:var(--text2)">Receive govt-recognized volunteer certificates</span></div></div>
-        <div style="display:flex;gap:1rem;margin-bottom:1rem;align-items:flex-start"><div style="width:42px;height:42px;border-radius:10px;background:rgba(0,180,255,0.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0"><i class="fa-solid fa-users"></i></div><div><strong>Community Impact</strong><br><span style="font-size:0.83rem;color:var(--text2)">Track your real-world impact through the dashboard</span></div></div>
-      </div>
-      <div class="report-form">
-        <h3 style="font-family:var(--font-head);font-size:1.2rem;font-weight:800;margin-bottom:1.2rem">Volunteer Registration</h3>
-        <div class="form-row">
-          <div class="form-group" style="margin-bottom:0"><label>Full Name *</label><input type="text" id="vol-name" placeholder="Your name"></div>
-          <div class="form-group" style="margin-bottom:0"><label>Age *</label><input type="number" id="vol-age" placeholder="18+"></div>
+    <div class="sec-label">Community Action</div>
+    <h2 class="sec-title">Join Our <span class="acc">Volunteer Network</span></h2>
+    <p class="sec-sub">Give your time and skills to help your community. Register below to get started.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:2.5rem;align-items:start">
+
+      <!-- Registration Form -->
+      <div style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:2rem">
+        <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:1.5rem">
+          <div style="width:40px;height:40px;border-radius:10px;background:rgba(192,132,252,0.15);display:flex;align-items:center;justify-content:center;color:#c084fc;font-size:1.1rem"><i class="fa-solid fa-hands-holding-heart"></i></div>
+          <div>
+            <div style="font-family:var(--font-head);font-size:1rem;font-weight:700">Volunteer Registration</div>
+            <div style="font-size:0.75rem;color:var(--text2)">Takes less than 2 minutes</div>
+          </div>
         </div>
-        <div class="form-group" style="margin-top:1rem"><label>Email Address *</label><input type="email" id="vol-email" placeholder="you@email.com"></div>
-        <div class="form-group"><label>Phone *</label><input type="tel" id="vol-phone" placeholder="+91 XXXXX XXXXX"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem">
+          <div class="form-group"><label>Full Name *</label><input type="text" id="vol-name" placeholder="Mohammed Irfan"></div>
+          <div class="form-group"><label>Age</label><input type="number" id="vol-age" placeholder="21" min="16" max="80"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem">
+          <div class="form-group"><label>Email *</label><input type="email" id="vol-email" placeholder="you@email.com"></div>
+          <div class="form-group"><label>Phone *</label><input type="tel" id="vol-phone" placeholder="+91 XXXXX XXXXX"></div>
+        </div>
+
         <div class="form-group"><label>Area of Interest *</label>
-          <select id="vol-area"><option value="">Select area…</option><option>Medical Aid</option><option>Food Distribution</option><option>Education Support</option><option>Disaster Relief</option><option>Environmental</option><option>Elder Care</option></select>
+          <select id="vol-area" style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.15);border-radius:9px;padding:0.65rem 0.8rem;color:var(--text);font-family:var(--font-body);width:100%;outline:none">
+            <option value="">Choose your area…</option>
+            <option value="Medical Aid">Medical Aid</option>
+            <option value="Food Distribution">Food Distribution</option>
+            <option value="Education Support">Education Support</option>
+            <option value="Disaster Relief">Disaster Relief</option>
+            <option value="Environmental">Environmental Cleanup</option>
+            <option value="Elder Care">Elder Care</option>
+            <option value="Tech Support">Tech Support</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
-        <div class="form-group"><label>Availability</label>
-          <select id="vol-avail"><option>Weekends only</option><option>Weekday evenings</option><option>Full-time</option><option>Emergency only</option></select>
+
+        <div class="form-group"><label>Availability *</label>
+          <select id="vol-avail" style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.15);border-radius:9px;padding:0.65rem 0.8rem;color:var(--text);font-family:var(--font-body);width:100%;outline:none">
+            <option value="">When can you help?</option>
+            <option value="Weekends only">Weekends only</option>
+            <option value="Weekday evenings">Weekday evenings</option>
+            <option value="Full-time">Full-time</option>
+            <option value="Emergency only">Emergency calls only</option>
+          </select>
         </div>
-        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:0.85rem" onclick="registerVolunteer()"><i class="fa-solid fa-check"></i> Register as Volunteer</button>
+
+        <div class="form-group"><label>Message (optional)</label>
+          <textarea id="vol-message" placeholder="Tell us about your skills, experience or why you want to volunteer…" rows="3"
+            style="resize:vertical;min-height:80px"></textarea>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:0.85rem;background:linear-gradient(135deg,#7c3aed,#c084fc);border:none" onclick="registerVolunteer()">
+          <i class="fa-solid fa-check"></i> Register as Volunteer
+        </button>
+        <div id="vol-form-status" style="display:none;margin-top:0.8rem;padding:0.7rem;border-radius:9px;font-size:0.82rem;text-align:center"></div>
+      </div>
+
+      <!-- Volunteer Benefits + Stats -->
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:1.5rem">
+          <div style="font-family:var(--font-head);font-size:0.9rem;font-weight:700;margin-bottom:1rem;color:#c084fc"><i class="fa-solid fa-star"></i> Why Volunteer?</div>
+          <div style="display:flex;flex-direction:column;gap:0.8rem">
+            <div style="display:flex;gap:0.8rem;align-items:flex-start">
+              <i class="fa-solid fa-circle-check" style="color:#00cc44;margin-top:2px;flex-shrink:0"></i>
+              <div style="font-size:0.83rem;color:var(--text2)">Make a real impact in your local community</div>
+            </div>
+            <div style="display:flex;gap:0.8rem;align-items:flex-start">
+              <i class="fa-solid fa-circle-check" style="color:#00cc44;margin-top:2px;flex-shrink:0"></i>
+              <div style="font-size:0.83rem;color:var(--text2)">Get a verified volunteer certificate</div>
+            </div>
+            <div style="display:flex;gap:0.8rem;align-items:flex-start">
+              <i class="fa-solid fa-circle-check" style="color:#00cc44;margin-top:2px;flex-shrink:0"></i>
+              <div style="font-size:0.83rem;color:var(--text2)">Build skills and expand your network</div>
+            </div>
+            <div style="display:flex;gap:0.8rem;align-items:flex-start">
+              <i class="fa-solid fa-circle-check" style="color:#00cc44;margin-top:2px;flex-shrink:0"></i>
+              <div style="font-size:0.83rem;color:var(--text2)">Track your volunteer hours in your dashboard</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem">
+          <div style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:1.2rem;text-align:center">
+            <div id="vol-count-stat" style="font-family:var(--font-head);font-size:1.8rem;font-weight:800;color:#c084fc">—</div>
+            <div style="font-size:0.75rem;color:var(--text2)">Active Volunteers</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:1.2rem;text-align:center">
+            <div style="font-family:var(--font-head);font-size:1.8rem;font-weight:800;color:#00cc44">7</div>
+            <div style="font-size:0.75rem;color:var(--text2)">Focus Areas</div>
+          </div>
+        </div>
+
+        <div style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:1.5rem">
+          <div style="font-family:var(--font-head);font-size:0.9rem;font-weight:700;margin-bottom:0.8rem">Focus Areas</div>
+          <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
+            <span style="padding:0.25rem 0.7rem;background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.2);border-radius:99px;font-size:0.75rem;color:#c084fc">Medical Aid</span>
+            <span style="padding:0.25rem 0.7rem;background:rgba(0,204,68,0.1);border:1px solid rgba(0,204,68,0.2);border-radius:99px;font-size:0.75rem;color:#00cc44">Food Distribution</span>
+            <span style="padding:0.25rem 0.7rem;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:99px;font-size:0.75rem;color:#3b82f6">Education</span>
+            <span style="padding:0.25rem 0.7rem;background:rgba(255,92,124,0.1);border:1px solid rgba(255,92,124,0.2);border-radius:99px;font-size:0.75rem;color:#ff5c7c">Disaster Relief</span>
+            <span style="padding:0.25rem 0.7rem;background:rgba(34,212,238,0.1);border:1px solid rgba(34,212,238,0.2);border-radius:99px;font-size:0.75rem;color:#22d4ee">Environmental</span>
+            <span style="padding:0.25rem 0.7rem;background:rgba(255,181,71,0.1);border:1px solid rgba(255,181,71,0.2);border-radius:99px;font-size:0.75rem;color:#ffb547">Elder Care</span>
+            <span style="padding:0.25rem 0.7rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:99px;font-size:0.75rem;color:var(--text2)">Tech Support</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -4601,6 +4803,290 @@ async function handleContactSubmit() {
     showToast('Error', 'Could not send message. Please try again.', 'error');
   }
 }
+
+
+/* ══════════════════════════════════════════════════════
+   PAGE FORM FUNCTIONS
+══════════════════════════════════════════════════════ */
+
+/* ── Issue Category Selector ── */
+function selectIssueCat(btn) {
+  document.querySelectorAll('.issue-cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ── Photo Preview ── */
+function previewIssuePhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const preview = document.getElementById('issue-photo-preview');
+  const reader = new FileReader();
+  reader.onload = e => {
+    if (preview) { preview.src = e.target.result; preview.style.display = 'block'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ── Track Issue ── */
+async function trackIssue() {
+  const ticket = document.getElementById('track-ticket')?.value.trim();
+  const result = document.getElementById('track-result');
+  if (!ticket || !result) return;
+
+  result.style.display = 'block';
+  result.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching…';
+
+  if (!fbReady) {
+    result.innerHTML = 'Connect to Firebase to track issues.';
+    return;
+  }
+
+  try {
+    const { db, collection, query, where, getDocs } = window.fb;
+    const q = query(collection(db, 'issues'), where('ticket_no', '==', ticket.toUpperCase()));
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      result.innerHTML = '❌ Ticket not found. Please check the number and try again.';
+      result.style.background = 'rgba(255,92,124,0.08)';
+      result.style.borderColor = 'rgba(255,92,124,0.2)';
+    } else {
+      const d = snap.docs[0].data();
+      const statusColors = { pending:'#ffb547', in_progress:'#3b82f6', resolved:'#00cc44', rejected:'#ff5c7c' };
+      const col = statusColors[d.status] || '#fff';
+      result.style.background = 'rgba(0,180,255,0.06)';
+      result.style.borderColor = 'rgba(0,180,255,0.2)';
+      result.innerHTML = `
+        <div style="font-weight:600;margin-bottom:0.4rem">Ticket: ${d.ticket_no}</div>
+        <div style="color:var(--text2);margin-bottom:0.3rem">${d.category?.toUpperCase()} — ${d.location}</div>
+        <div>Status: <span style="font-weight:700;color:${col}">${(d.status||'').replace('_',' ').toUpperCase()}</span></div>`;
+    }
+  } catch(e) {
+    result.innerHTML = 'Could not fetch. Check Firestore rules.';
+  }
+}
+
+/* ── Submit Blood Donor Registration ── */
+async function submitDonorRegistration() {
+  const name  = document.getElementById('donor-name')?.value.trim();
+  const bg    = document.getElementById('donor-bg')?.value;
+  const phone = document.getElementById('donor-phone')?.value.trim();
+  const city  = document.getElementById('donor-city')?.value.trim();
+  const age   = document.getElementById('donor-age')?.value;
+  const last  = document.getElementById('donor-last')?.value;
+  const statusEl = document.getElementById('donor-form-status');
+
+  if (!name || !bg || !phone || !city) {
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.style.background = 'rgba(255,92,124,0.1)';
+      statusEl.style.color = '#ff5c7c';
+      statusEl.textContent = '⚠ Please fill in all required fields.';
+    }
+    return;
+  }
+
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'rgba(0,180,255,0.08)';
+    statusEl.style.color = 'var(--accent)';
+    statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Registering…';
+  }
+
+  // Save to Firestore
+  const data = await fsAdd('donors', {
+    name, blood_group: bg, phone, city,
+    age: age ? parseInt(age) : null,
+    last_donated: last || null,
+    available: true,
+    user_id: currentUser?.uid || null
+  });
+
+  if (statusEl) {
+    if (data) {
+      statusEl.style.background = 'rgba(0,204,68,0.1)';
+      statusEl.style.color = '#00cc44';
+      statusEl.innerHTML = '✅ Registered successfully! Thank you for joining the donor network.';
+      // Clear form
+      ['donor-name','donor-phone','donor-city','donor-age','donor-last'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+      });
+      document.getElementById('donor-bg').value = '';
+      // Refresh donor list
+      renderDonors('all');
+    } else {
+      statusEl.style.background = 'rgba(255,92,124,0.1)';
+      statusEl.style.color = '#ff5c7c';
+      statusEl.textContent = '❌ Registration failed. Please try again.';
+    }
+  }
+}
+
+/* ── Enhanced renderDonors with city filter ── */
+const _oldRenderDonors = renderDonors;
+renderDonors = async function(filter) {
+  const cityFilter = document.getElementById('filter-city')?.value.trim().toLowerCase() || '';
+  const grid = document.getElementById('donorsGrid');
+  if (!grid) return;
+
+  // Try Firebase first
+  if (fbReady) {
+    const all = await fsGetAll('donors', { orderBy: 'created_at' });
+    if (all) {
+      let donors = all;
+      if (filter && filter !== 'all') donors = donors.filter(d => d.blood_group === filter);
+      if (cityFilter) donors = donors.filter(d => (d.city || '').toLowerCase().includes(cityFilter));
+      if (!donors.length) {
+        grid.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text2);font-size:0.85rem">No donors found for this filter.</div>';
+        return;
+      }
+      grid.innerHTML = donors.map(d => `
+        <div style="background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:1rem;display:flex;gap:0.8rem;align-items:center;transition:border-color 0.2s"
+          onmouseover="this.style.borderColor='rgba(255,255,255,0.25)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(220,38,38,0.15);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:1rem;font-weight:800;color:#ef4444;flex-shrink:0">${d.blood_group}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:0.87rem;margin-bottom:0.1rem">${d.name}</div>
+            <div style="font-size:0.75rem;color:var(--text2)">${d.city || '—'}</div>
+            ${d.last_donated ? `<div style="font-size:0.71rem;color:var(--text3);margin-top:1px">Last: ${d.last_donated}</div>` : ''}
+          </div>
+          <div>
+            <span style="padding:0.18rem 0.55rem;border-radius:99px;font-size:0.69rem;font-weight:700;${d.available ? 'background:rgba(0,204,68,0.12);color:#00cc44' : 'background:rgba(255,255,255,0.07);color:var(--text3)'}">
+              ${d.available ? '● Available' : '○ Busy'}
+            </span>
+          </div>
+        </div>`).join('');
+      return;
+    }
+  }
+
+  // Fallback to demo
+  _oldRenderDonors(filter);
+};
+
+/* ── Enhanced registerVolunteer with status feedback ── */
+const _oldRegVol = registerVolunteer;
+registerVolunteer = async function() {
+  const name    = document.getElementById('vol-name')?.value.trim();
+  const age     = document.getElementById('vol-age')?.value;
+  const email   = document.getElementById('vol-email')?.value.trim();
+  const phone   = document.getElementById('vol-phone')?.value.trim();
+  const area    = document.getElementById('vol-area')?.value;
+  const avail   = document.getElementById('vol-avail')?.value;
+  const message = document.getElementById('vol-message')?.value.trim();
+  const statusEl = document.getElementById('vol-form-status');
+
+  if (!name || !email || !phone || !area || !avail) {
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.style.background = 'rgba(255,92,124,0.1)';
+      statusEl.style.color = '#ff5c7c';
+      statusEl.textContent = '⚠ Please fill in all required fields.';
+    }
+    return;
+  }
+
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'rgba(0,180,255,0.08)';
+    statusEl.style.color = 'var(--accent)';
+    statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Registering…';
+  }
+
+  const data = await fsAdd('volunteers', {
+    name, age: age ? parseInt(age) : null, email, phone,
+    area, availability: avail, message: message || null,
+    hours_logged: 0, status: 'active',
+    user_id: currentUser?.uid || null
+  });
+
+  if (statusEl) {
+    if (data) {
+      statusEl.style.background = 'rgba(124,58,237,0.1)';
+      statusEl.style.color = '#c084fc';
+      statusEl.innerHTML = '✅ Registered! Welcome to the volunteer network, ' + name + '!';
+      ['vol-name','vol-age','vol-email','vol-phone','vol-message'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+      });
+      document.getElementById('vol-area').value = '';
+      document.getElementById('vol-avail').value = '';
+      // Update vol count stat
+      const vc = document.getElementById('vol-count-stat');
+      if (vc && fbReady) {
+        const vols = await fsGetAll('volunteers');
+        if (vols) vc.textContent = vols.length;
+      }
+    } else {
+      statusEl.style.background = 'rgba(255,92,124,0.1)';
+      statusEl.style.color = '#ff5c7c';
+      statusEl.textContent = '❌ Registration failed. Please try again.';
+    }
+  }
+};
+
+/* ── Enhanced submitReport with status feedback ── */
+const _oldSubmitReport = submitReport;
+submitReport = async function() {
+  const name    = document.getElementById('issue-name')?.value.trim();
+  const phone   = document.getElementById('issue-phone')?.value.trim();
+  const location= document.getElementById('issue-location')?.value.trim();
+  const desc    = document.getElementById('issue-desc')?.value.trim();
+  const catBtn  = document.querySelector('.issue-cat-btn.active');
+  const category= catBtn?.dataset.val || 'other';
+  const statusEl= document.getElementById('report-form-status');
+
+  if (!name || !phone || !location || !desc) {
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.style.background = 'rgba(255,92,124,0.1)';
+      statusEl.style.color = '#ff5c7c';
+      statusEl.textContent = '⚠ Please fill in all required fields.';
+    }
+    return;
+  }
+
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'rgba(0,180,255,0.08)';
+    statusEl.style.color = 'var(--accent)';
+    statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting…';
+  }
+
+  const ticket = 'CP' + Date.now().toString().slice(-6);
+  const data = await fsAdd('issues', {
+    category, name, phone, location, description: desc,
+    ticket_no: ticket, status: 'pending',
+    user_id: currentUser?.uid || null
+  });
+
+  // Update local count
+  const cnt = parseInt(localStorage.getItem('cp_issue_count') || '0');
+  localStorage.setItem('cp_issue_count', cnt + 1);
+
+  if (statusEl) {
+    if (data) {
+      statusEl.style.background = 'rgba(0,204,68,0.1)';
+      statusEl.style.color = '#00cc44';
+      statusEl.innerHTML = '✅ Issue submitted! Your ticket number: <strong>' + ticket + '</strong>. Track it in your dashboard.';
+      ['issue-name','issue-phone','issue-location','issue-desc'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+      });
+      document.getElementById('issue-photo-preview').style.display = 'none';
+      document.querySelectorAll('.issue-cat-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+    } else {
+      statusEl.style.background = 'rgba(255,92,124,0.1)';
+      statusEl.style.color = '#ff5c7c';
+      statusEl.textContent = '❌ Submission failed. Please try again.';
+    }
+  }
+};
+
+/* ── Load volunteer count stat on page load ── */
+window.addEventListener('firebase-ready', async () => {
+  const vc = document.getElementById('vol-count-stat');
+  if (vc) {
+    const vols = await fsGetAll('volunteers');
+    if (vols) vc.textContent = vols.length;
+  }
+});
 
 </script>
 
